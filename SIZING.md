@@ -27,7 +27,8 @@ SIZING.md
 
 **Scrum Master for This Meeting:** Daniel Huyer
 
-**Zoom Recording Link:** https://teams.microsoft.com/l/meetingrecap?driveId=b%21XE9BWQVpEUiEMzqkQY7wiBUKY5-YzY5FojyrQC-nJir5VHMbi6M1QL2kScKpHyFC&driveItemId=015OBBCLIQUWPTNI2JEFEKZPRS7NEA243C&sitePath=https%3A%2F%2Fo365coloradoedu-my.sharepoint.com%2Fpersonal%2Fbrro5166_colorado_edu%2FDocuments%2FRecordings%2FGroup+Meeting-20260608_180325-Meeting+Recording.mp4&fileUrl=https%3A%2F%2Fo365coloradoedu-my.sharepoint.com%2Fpersonal%2Fbrro5166_colorado_edu%2FDocuments%2FRecordings%2FGroup+Meeting-20260608_180325-Meeting+Recording.mp4&iCalUid=040000008200e00074c5b7101a82e00800000000635af70e84f7dc010000000000000000100000002675eb430a854947890bfd1cde380d80&threadId=19%3Ameeting_ZTNhZTk3NzctYzJjZS00ZGMyLTkxZDAtMDljNDlhYjhmNmY1%40thread.v2&organizerId=98325643-ddd6-4f45-a4e1-e3f0d404ffc5&tenantId=3ded8b1b-070d-4629-82e4-c0b019f46057&callId=c38cfefb-c223-4e4b-b3f5-4bdc55c3bab6&threadType=meeting&meetingType=Scheduled&subType=RecapSharingLink_RecapCore
+**Zoom Recording Link:** 
+https://o365coloradoedu-my.sharepoint.com/personal/brro5166_colorado_edu/_layouts/15/stream.aspx?id=%2Fpersonal%2Fbrro5166%5Fcolorado%5Fedu%2FDocuments%2FRecordings%2FGroup%20Meeting%2D20260608%5F180325%2DMeeting%20Recording%2Emp4&referrer=StreamWebApp%2EWeb&referrerScenario=AddressBarCopied%2Eview%2E00c2971c%2De929%2D4577%2D9738%2D80cb8d97d0c0
 
 ---
 
