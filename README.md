@@ -10,7 +10,7 @@
 | Name                       | Git Username     | Email                                                                         |
 | -------------------------- | ---------------- | ----------------------------------------------------------------------------- |
 | Daniel Huyer               | daniel-huyer     | [Daniel.Huyer@colorado.edu](mailto:Daniel.Huyer@colorado.edu)                 |
-| Kevin Bell                 | Add Git username | [Kevin.Bell-3@colorado.edu](mailto:Kevin.Bell-3@colorado.edu)                 |
+| Kevin Bell                 | kelenosi         | [Kevin.Bell-3@colorado.edu](mailto:Kevin.Bell-3@colorado.edu)                 |
 | Bri Rowe                   | brro5166         | [Bri.Rowe@colorado.edu](mailto:Bri.Rowe@colorado.edu)                         |
 | Alejandro Banuelos Vielmas | Abanuelo22       | [Alex.BanuelosVielmas@colorado.edu](mailto:Alex.BanuelosVielmas@colorado.edu) |
 
