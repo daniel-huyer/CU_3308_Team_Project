@@ -52,5 +52,5 @@ The project will be broken into smaller tasks with regular testing throughout de
 
 ## Project Tracking Software
 
-**Tracking Tool:** Trello
-**Link:** (https://trello.com/invite/b/6a333b14793b20b7b222ecff/ATTI110bf6e20ddf93faf893ba479704edb5B475993E/team-4-project-tracking)
+**Tracking Tool:** GitHub Projects
+**Link:** (https://github.com/users/daniel-huyer/projects/1)
