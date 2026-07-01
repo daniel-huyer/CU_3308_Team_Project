@@ -53,4 +53,5 @@ The project will be broken into smaller tasks with regular testing throughout de
 ## Project Tracking Software
 
 **Tracking Tool:** GitHub Projects
+
 **Link:** (https://github.com/users/daniel-huyer/projects/1)
