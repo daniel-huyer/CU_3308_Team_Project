@@ -67,6 +67,7 @@ Key accomplishments include:
 - Created GitHub repository and added all team members
 - Established baseline frontend and backend directory structure
 - Set up GitHub project board with initial task breakdown
+- Brokedown & assigned milestone task to be complete by next weeks meeting. 
 
 ---
 
@@ -88,7 +89,7 @@ No major technical blockers were encountered this week.
 
 Issue discussions on certain points about:  
 
-- Learning the structure of how project should be developed.  
+- Learning the structure of how this project should be developed.  
 - Deciding on what takes priority over small issues.  
 
 
