@@ -1,0 +1,257 @@
+# JGT Personal Finance Dashboard — Developer Setup & Architecture Guide
+
+This document covers everything a new team member needs to get the project running locally or on csel.io, and explains the key architectural decisions made during Issue 1.2 setup.
+
+---
+
+## Prerequisites
+
+- Python 3.11
+- Git
+- Access to the GitHub repository
+- A csel.io account (for running on the course virtual machine)
+
+---
+
+## Initial Setup
+
+### 1. Clone the repository
+
+```bash
+git clone <repo-url>
+cd CU_3308_Team_Project
+```
+
+### 2. Create and activate a virtual environment
+
+The `venv/` folder is excluded from Git via `.gitignore`. Every team member creates their own local venv from `requirements.txt`.
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+You'll know it's active when you see `(venv)` at the start of your terminal prompt. You need to run this every time you open a new terminal session to work on the project.
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Create your `.env` file
+
+The `.env` file is excluded from Git — it holds secrets that should never be committed. Create it in the project root:
+
+```
+SECRET_KEY=your-secret-key-here
+DATABASE_URL=sqlite:///finance.db
+```
+
+There is a `.env.example` file in the repo with the same keys but empty values — use that as a reference.
+
+---
+
+## Running the App
+
+### On csel.io (JupyterHub)
+
+csel.io runs Flask through a JupyterHub proxy, which requires environment setup before starting the server. Always run both commands:
+
+```bash
+source setup.cmds
+flask run
+```
+
+Then access the app at:
+
+```
+https://coding.csel.io/user/<your-username>/proxy/3308/
+```
+
+Do **not** try to access `127.0.0.1:3308` directly in your browser — that will fail because the server is remote. You must go through the proxy URL.
+
+### Locally (your own machine)
+
+```bash
+source setup.cmds
+flask run
+```
+
+Then access the app at `http://127.0.0.1:3308`.
+
+The same commands work in both environments. `prefix.py` detects whether it's running on csel.io and adjusts URL handling automatically — it has no effect when running locally.
+
+---
+
+## Project Structure
+
+```
+CU_3308_Team_Project/
+├── app/
+│   ├── __init__.py        # Application factory (create_app)
+│   ├── models.py          # SQLAlchemy database models
+│   ├── routes.py          # Flask route handlers (Blueprint)
+│   ├── static/
+│   │   └── css/
+│   │       └── style.css  # Global stylesheet
+│   └── templates/
+│       ├── base.html      # Shared layout all pages extend
+│       └── dashboard.html # Main dashboard page
+├── docs/                  # Team documentation and meeting notes
+├── tests/                 # pytest test files
+├── app.py                 # Entry point (imports factory, wires prefix)
+├── prefix.py              # csel.io proxy middleware (course-provided)
+├── setup.cmds             # Environment variable setup script
+├── requirements.txt       # Pinned Python dependencies
+├── .env                   # Local secrets — never commit this
+└── .env.example           # Template for .env — commit this
+```
+
+---
+
+## Architecture
+
+### Application Factory Pattern (`app/__init__.py`)
+
+Rather than creating the Flask app at the module level, the project uses an **application factory** — a `create_app()` function that builds and returns the app instance.
+
+```python
+def create_app():
+    app = Flask(__name__)
+    # configure, register extensions, register blueprints
+    return app
+```
+
+This pattern exists for three reasons:
+
+1. **Testing** — you can create multiple app instances with different configs (one for tests, one for production) without them interfering with each other.
+2. **Extensions** — Flask extensions like SQLAlchemy and Flask-Login need to be initialized with `db.init_app(app)` inside the factory. This avoids circular imports that would occur if extensions were initialized at the module level.
+3. **Blueprints** — routes are registered inside `create_app()` which keeps initialization order explicit and predictable.
+
+### Blueprint (`app/routes.py`)
+
+Routes are defined in `routes.py` using a Flask **Blueprint** rather than directly on the app object. A Blueprint is a way to organize routes into a group that gets registered on the app.
+
+```python
+main = Blueprint('main', __name__)
+
+@main.route('/')
+def index():
+    return render_template('dashboard.html')
+```
+
+The blueprint is registered inside `create_app()`:
+
+```python
+from app.routes import main
+app.register_blueprint(main)
+```
+
+The import lives inside `create_app()` rather than at the top of the file to prevent circular imports — `routes.py` will eventually import from `app` (e.g. the `db` instance), so importing `routes` at the top of `app/__init__.py` would create a circular dependency.
+
+As the project grows, additional blueprints will be added for auth, transactions, and budgets. Each will have its own file under `app/`.
+
+### Database Models (`app/models.py`)
+
+Models are defined using **Flask-SQLAlchemy**, which wraps SQLAlchemy and integrates it with Flask's application context.
+
+```python
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+class User(db.Model):
+    ...
+```
+
+`db` is initialized separately from the app and then connected inside `create_app()` via:
+
+```python
+from app.models import db
+db.init_app(app)
+```
+
+This separation is intentional — if `db` were created with `db = SQLAlchemy(app)` directly, you'd hit circular import issues as soon as models needed to import anything from the app package.
+
+### Templates (`app/templates/`)
+
+Templates use **Jinja2**, Flask's built-in templating engine. The project follows a base template pattern:
+
+- `base.html` — defines the shared HTML structure (nav bar, head, body wrapper). All pages extend this.
+- Page templates (e.g. `dashboard.html`) extend `base.html` and fill in named blocks.
+
+```html
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h1>Dashboard</h1>
+{% endblock %}
+```
+
+This means nav bar changes, CSS links, and layout changes only need to be made in one place.
+
+### csel.io Proxy (`prefix.py`)
+
+csel.io runs each user's Flask app behind a JupyterHub reverse proxy. This means:
+
+- The app runs on `127.0.0.1:3308` inside the VM
+- The browser accesses it via `coding.csel.io/user/<username>/proxy/3308/`
+
+`prefix.py` is a course-provided WSGI middleware that reads the `JUPYTERHUB_SERVICE_PREFIX` environment variable (automatically set by JupyterHub) and sets Flask's `SCRIPT_NAME` on each request. This tells Flask about the proxy prefix so that `url_for()` generates correct URLs inside the app.
+
+When running locally `JUPYTERHUB_SERVICE_PREFIX` is not set, so `prefix.py` does nothing — URLs work as normal.
+
+`prefix.py` is the Flask entry point (`FLASK_APP=prefix.py` in `setup.cmds`). At the bottom of `prefix.py`, the factory is called and the middleware is applied:
+
+```python
+from app import create_app
+app = create_app()
+use_PrefixMiddleware(app)
+```
+
+Flask finds the module-level `app` variable here and uses it.
+
+---
+
+## Adding New Routes
+
+When you're ready to add a new route:
+
+1. Add it to `app/routes.py` using the `@main.route` decorator
+2. Create a corresponding template in `app/templates/` that extends `base.html`
+3. Add a nav link in `base.html` if needed
+
+For larger features (auth, transactions, budgets), create a new blueprint file (e.g. `app/auth.py`) and register it in `create_app()` the same way `main` is registered.
+
+---
+
+## Adding New Models
+
+When you're ready to add a new database model:
+
+1. Add the model class to `app/models.py`
+2. Run `flask shell` and call `db.create_all()` to create the table
+
+```bash
+flask shell
+>>> from app.models import db
+>>> db.create_all()
+>>> exit()
+```
+
+---
+
+## Common Issues
+
+**`TemplateNotFound` error** — Flask looks for templates in `app/templates/` since the app package is `app`. Make sure templates are in that folder, not the project root.
+
+**`venv/` showing up in `git status`** — it shouldn't be since it's in `.gitignore`. If it is, run `git rm -r --cached venv/` to untrack it.
+
+**`.ipynb_checkpoints/` triggering Flask reloads** — add `.ipynb_checkpoints/` to `.gitignore` and it will stop appearing.
+
+**404 on `style.css`** — make sure `app/static/css/style.css` exists. Even an empty file will stop the 404.
+
+**Nav links redirecting to JupyterHub** — make sure you accessed the app through the proxy URL first (`coding.csel.io/user/<username>/proxy/3308/`) and that `source setup.cmds` was run before `flask run`.
