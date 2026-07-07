@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Personal Finance Dashboard follows a standard flask web application architecture using the Model View Controller Pattern.
+The Personal Finance Dashboard follows a standard flask web application architecture using the Model View Controller pattern.
 
 - **FrontEnd:** HTML templates, CSS, and Javascript provide the user interface.
 - **Backend:** Flask handles HTTP request and applications logic.
