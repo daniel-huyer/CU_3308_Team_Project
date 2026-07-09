@@ -52,6 +52,7 @@ class PrefixMiddleware(object):
             # the Flask environment variable SERVER_PORT contains the port used by Flask
             self.service_prefix += "proxy/"
             print(f"Setting service_prefix to {self.service_prefix}")
+            print(f"\n * Access app at: https://coding.csel.io{self.service_prefix}/3308/\n")
 
         
     def __call__(self, environ, start_response):
