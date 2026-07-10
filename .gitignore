@@ -10,6 +10,7 @@ __pycache__/
 venv/
 .venv/
 env/
+instance/
 
 # Environment Variables
 .env
@@ -17,6 +18,9 @@ env/
 # SQLite Databases
 *.db
 *.sqlite3
+
+# Flask Instance
+instance/
 
 # macOS
 .DS_Store
@@ -29,4 +33,3 @@ env/
 
 # Logs
 *.log
-.ipynb_checkpoints/
