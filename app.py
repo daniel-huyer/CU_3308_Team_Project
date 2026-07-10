@@ -1,7 +1,6 @@
 # app.py
 from app import create_app
 import prefix
-from flask import request
 
 app = create_app()
 

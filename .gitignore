@@ -19,6 +19,9 @@ instance/
 *.db
 *.sqlite3
 
+# Flask Instance
+instance/
+
 # macOS
 .DS_Store
 
@@ -30,3 +33,4 @@ instance/
 
 # Logs
 *.log
+
