@@ -1,8 +1,6 @@
 # app/models.py
 from app.db import db
 
-db = SQLAlchemy()
-
 class User(db.Model):
     __tablename__ = 'users'
     
