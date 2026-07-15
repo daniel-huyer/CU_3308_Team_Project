@@ -40,3 +40,39 @@ class User(db.Model):
     def check_password(self, password):
         self.check_password(self.password_hash, password)
 
+
+class Category(db.Model):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80), nullable=False)
+    type = db.Column(db.String(20), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    user = db.relationship(
+        "User",
+        back_populates="categories",
+    )
+    transactions = db.relationship(
+        "Transaction",
+        back_populates="category",
+        cascade="all, delete-orphan",
+    )
+    budgets = db.relationship(
+        "Budget",
+        back_populates="category",
+        cascade="all, delete-orphan",
+    )
+
+    __table_args__ = (
+        db.CheckConstraint(
+            "type IN ('income', 'expense')",
+            name="ck_category_type",
+        ),
+        db.UniqueConstraint(
+            "user_id",
+            "name",
+            "type",
+            name="uq_category_user_name_type",
+        ),
+    )

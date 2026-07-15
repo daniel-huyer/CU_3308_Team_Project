@@ -11,9 +11,9 @@
 
 from app import create_app
 from app.db import db
-from app.models import User
+from app.models import User, Category
 # TODO: import additional models as they are built
-# from app.models import Category, Transaction, Budget
+#from app.models import Category, Transaction, Budget
 
 from werkzeug.security import generate_password_hash
 
@@ -42,6 +42,47 @@ with app.app_context():
     db.session.add(demo_user)
     db.session.commit()
     print(f"Created user: {demo_user.username}")
+
+    # -------------------------------------------------------------------------
+    # Seed Categories
+    # TODO: add sample transaction data when Transaction model is built (Issue 2.2)
+    # -------------------------------------------------------------------------
+    expense_categories = [
+        "Food",
+        "Transportation",
+        "Utilities",
+        "Entertainment",
+        "Healthcare",
+        "Housing",
+    ]
+
+    income_categories = [
+        "Paycheck",
+        "Freelance",
+        "Gift",
+        "Other",
+    ]
+
+    for name in expense_categories:
+        
+        db.session.add(
+            Category(
+                name=name,
+                type="expense",
+                user_id=demo_user.id,
+            )
+        )
+
+    for name in income_categories:
+        db.session.add(
+            Category(
+                name=name,
+                type="income",
+                user_id=demo_user.id,
+            )
+        )    
+
+    db.session.commit()
 
     # -------------------------------------------------------------------------
     # Seed Transactions
