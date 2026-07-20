@@ -1,5 +1,5 @@
 # app/models.py
-from datetime import date, datetime
+from datetime import date, datetime, UTC
 import re
 
 from sqlalchemy.orm import validates
@@ -74,5 +74,38 @@ class Category(db.Model):
             "name",
             "type",
             name="uq_category_user_name_type",
+        ),
+    )
+
+class Transaction(db.Model):
+    __tablename__ = "transactions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
+    amount = db.Column(db.Numeric(12, 2), nullable=False)
+    type = db.Column(db.String(20),nullable=False)
+    date = db.Column(db.Date, nullable=False, default=date.today)
+    note = db.Column(db.String(255), nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
+
+    user = db.relationship(
+        "User",
+        back_populates="transactions",
+    )
+
+    category = db.relationship(
+        "Category",
+        back_populates="transactions",
+    )
+
+    __table_args__ = (
+        db.CheckConstraint(
+            "type IN ('income', 'expense')",
+            name="ck_transaction_type",
+        ),
+        db.CheckConstraint(
+            "amount >= 0",
+            name="ck_transaction_amount_nonnegative",
         ),
     )
