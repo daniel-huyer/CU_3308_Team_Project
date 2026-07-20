@@ -109,3 +109,47 @@ class Transaction(db.Model):
             name="ck_transaction_amount_nonnegative",
         ),
     )
+
+class Budget(db.Model):
+    __tablename__ = "budgets"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
+    month = db.Column(db.String(7), nullable=False)
+    limit_amount = db.Column(db.Numeric(12, 2), nullable=False)
+
+    user = db.relationship(
+        "User",
+        back_populates="budgets",
+    )
+    category = db.relationship(
+        "Category",
+        back_populates="budgets",
+    )
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id",
+            "category_id",
+            "month",
+            name="uq_budget_user_category_month",
+        ),
+        db.CheckConstraint(
+            "limit_amount >= 0",
+            name="ck_budget_limit_nonnegative",
+        ),
+    )
+
+    @validates("month")
+    def validate_month(self, key, value):
+        if not isinstance(value, str) or not re.fullmatch(
+            r"\d{4}-(0[1-9]|1[0-2])",
+            value,
+        ):
+            raise ValueError("month must use YYYY-MM format")
+
+        return value
+
+
+
