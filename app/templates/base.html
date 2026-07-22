@@ -5,15 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}JGT Finance{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block styles %}<!-- page specific style sheets if present -->{% endblock %}
 </head>
 <body>
-    <nav>
-        <a href="{{ url_for('main.index') }}">Dashboard</a>
-        <a href="#">Transactions</a>
-        <a href="#">Budgets</a>
-    </nav>
+    <header>
+        <nav>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('main.transactions') }}">Transactions</a>
+                <a href="{{ url_for('main.budgets') }}">Budgets</a>
+                <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('main.index') }}">Home</a>
+                <a href="{{ url_for('auth.login') }}">Login</a>
+            {% endif %}
+        </nav>
+    </header>
     <main>
         {% block content %}{% endblock %}
     </main>
+    <footer>
+            <p>&copy; 2026 JGT Finance. All rights reserved.</p>
+    </footer>
 </body>
 </html>
