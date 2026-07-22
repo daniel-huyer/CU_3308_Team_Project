@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Users - JGT Finance{% endblock %}
+
+{% block styles %}<!-- page specific style sheet if wanted -->{% endblock %}
+<!-- header/nav get's included from base.html -->
+<!-- start main -->
+{% block content %}
+    <h1>Users</h1>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Email</th>            
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <p>Row count: {{ users|length }}</p>
+{% endblock %}
+<!-- end main -->
+<!-- footer get's included from base.html -->
