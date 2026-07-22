@@ -37,11 +37,33 @@ with app.app_context():
     demo_user = User(
         username='demo',
         email='demo@example.com',
-        password_hash=generate_password_hash('password123')
+        password_hash=generate_password_hash('password123'),
+        role='user'
     )
     db.session.add(demo_user)
+
+    # Admin users — team members
+    admins = [
+        {'username': 'Daniel',    'email': 'Daniel.Huyer@colorado.edu'},
+        {'username': 'Kevin',     'email': 'Kevin.Bell-3@colorado.edu'},
+        {'username': 'Bri',       'email': 'Bri.Rowe@colorado.edu'},
+        {'username': 'Alejandro', 
+        'email': 'Alex.BanuelosVielmas@colorado.edu'},
+    ]
+
+    admin_users = []
+    for a in admins:
+        user = User(
+            username=a['username'],
+            email=a['email'],
+            password_hash=generate_password_hash('admin123'),
+            role='admin'
+        )
+        db.session.add(user)
+        admin_users.append(user)
+        
     db.session.commit()
-    print(f"Created user: {demo_user.username}")
+    print(f"Created demo user and {len(admin_users)} admin users.")
 
     # -------------------------------------------------------------------------
     # Seed Categories

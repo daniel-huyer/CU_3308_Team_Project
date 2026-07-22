@@ -15,6 +15,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
+    role = db.Column(db.String(20), nullable=False, default='user')
     created_at = db.Column(db.DateTime, server_default=db.func.now())
    
     categories = db.relationship(
@@ -35,11 +36,22 @@ class User(UserMixin, db.Model):
         cascade="all, delete-orphan"
     )
 
+    __table_args__ = (
+        db.CheckConstraint(
+            "role IN ('user', 'admin')",
+            name='ck_user_role'
+        ),
+    )
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        self.check_password_hash(self.password_hash, password)
+        return self.check_password_hash(self.password_hash, password)
+
+    @property
+    def is_admin(self):
+        return self.role == 'admin'
 
 
 class Category(db.Model):
