@@ -1,6 +1,7 @@
 # app/auth.py
 
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
+from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from app.models import User
 
@@ -18,7 +19,7 @@ def login():
             return render_template('login.html', 
                                    error='Invalid username or password')
 
-        session['user_id'] = user.id
+        login_user(user)
         return redirect(url_for('main.dashboard'))
 
     return render_template('login.html')
@@ -27,3 +28,8 @@ def login():
 @auth.route('/register', methods=['GET', 'POST'])
 def register():
     return render_template('register.html')
+
+@auth.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('main.index'))

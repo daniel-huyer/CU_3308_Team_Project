@@ -11,6 +11,14 @@ def index():
 def dashboard():
     return render_template('dashboard.html')
 
+@main.route('/transactions')
+def transactions():
+    return render_template('transactions.html')
+
+@main.route('/budgets')
+def budgets():
+    return render_template('budgets.html')
+
 @main.route('/admin/users')
 def db_test():
     from app.models import User
