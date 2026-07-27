@@ -1,14 +1,144 @@
-{% extends 'base.html' %}
+{% extends 'base.html' %} {% block title %}Transactions - JGT Finance{% endblock
+%} {% block styles %}<!-- page specific style sheet if wanted -->{% endblock %}
 
-{% block title %}Transactions - JGT Finance{% endblock %}
-
-{% block styles %}<!-- page specific style sheet if wanted -->{% endblock %}
 <!-- header/nav get's included from base.html -->
+
 <!-- start main -->
 {% block content %}
-    <h1>Transactions</h1>
-    <h3>Hi {{ current_user.username }},</h3>
-    <p>Welcome to your Transactions</p>
+<h1>Transactions</h1>
+
+<h3>Hi {{ current_user.username }},</h3>
+
+<p>Welcome to your Transactions</p>
+
+<hr />
+
+<h2>Add Transaction</h2>
+
+<form id="transaction-form">
+  <!-- Hidden field used when editing an existing transaction -->
+  <input type="hidden" id="transaction_id" name="transaction_id" />
+
+  <label for="type">Transaction Type</label><br />
+  <select id="type" name="type" required>
+    <option value="">Select Type</option>
+    <option value="income">Income</option>
+    <option value="expense">Expense</option>
+  </select>
+
+  <br /><br />
+
+  <label for="amount">Amount</label><br />
+  <input
+    type="number"
+    id="amount"
+    name="amount"
+    step="0.01"
+    min="0.01"
+    placeholder="0.00"
+    required
+  />
+
+  <br /><br />
+
+  <label for="category_id">Category</label><br />
+  <select id="category_id" name="category_id" required>
+    <option value="">Select Category</option>
+
+    {% if categories %} {% for category in categories %}
+    <option value="{{ category.id }}" data-category-type="{{ category.type }}">
+      {{ category.name }}
+    </option>
+    {% endfor %} {% endif %}
+  </select>
+
+  <br /><br />
+
+  <label for="date">Date</label><br />
+  <input type="date" id="date" name="date" required />
+
+  <br /><br />
+
+  <label for="note">Note</label><br />
+  <textarea
+    id="note"
+    name="note"
+    rows="3"
+    cols="40"
+    maxlength="255"
+    placeholder="Optional description"
+  ></textarea>
+
+  <br /><br />
+
+  <button type="submit" id="submit-transaction-button">Add Transaction</button>
+
+  <button type="button" id="cancel-edit-button" hidden>Cancel Edit</button>
+</form>
+
+<!-- Success / Error messages from JavaScript -->
+<div id="transaction-message" role="alert" aria-live="polite"></div>
+
+<hr />
+
+<h2>Transaction History</h2>
+
+{% if transactions %}
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Category</th>
+      <th>Amount</th>
+      <th>Note</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for transaction in transactions %}
+
+    <tr>
+      <td>{{ transaction.date }}</td>
+      <td>{{ transaction.type|capitalize }}</td>
+      <td>{{ transaction.category.name }}</td>
+      <td>${{ "%.2f"|format(transaction.amount) }}</td>
+      <td>{{ transaction.note or "" }}</td>
+
+      <td>
+        <button
+          type="button"
+          class="edit-transaction-button"
+          data-id="{{ transaction.id }}"
+        >
+          Edit
+        </button>
+
+        <button
+          type="button"
+          class="delete-transaction-button"
+          data-id="{{ transaction.id }}"
+        >
+          Delete
+        </button>
+      </td>
+    </tr>
+
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+
+<p>No transactions available.</p>
+
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+
 {% endblock %}
 <!-- end main -->
+
 <!-- footer get's included from base.html -->
