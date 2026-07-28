@@ -12,7 +12,7 @@ migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 
-def create_app():
+def create_app(test_config=None):
     load_dotenv()
     
     app = Flask(__name__)
@@ -20,6 +20,9 @@ def create_app():
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    if test_config is not None:
+        app.config.update(test_config)
 
     db.init_app(app)
     migrate.init_app(app, db)
