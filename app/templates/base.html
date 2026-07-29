@@ -5,11 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}JGT Finance{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    {% block styles %}<!-- page specific style sheets if present -->{% endblock %}
+    {% block styles %}{% endblock %}
 </head>
 <body>
-    <header>
-        <nav>
+    <header class="navbar">
+        <a href="{{ url_for('main.index') }}" class="navbar-brand">JGT Finance</a>
+        <nav class="navbar-links">
             {% if current_user.is_authenticated %}
                 <a href="{{ url_for('main.dashboard') }}">Dashboard</a>
                 <a href="{{ url_for('main.transactions') }}">Transactions</a>
@@ -21,11 +22,13 @@
             {% endif %}
         </nav>
     </header>
-    <main>
+
+    <main class="content">
         {% block content %}{% endblock %}
     </main>
-    <footer>
-            <p>&copy; 2026 JGT Finance. All rights reserved.</p>
+
+    <footer class="footer">
+        <p>&copy; 2026 JGT Finance. All rights reserved.</p>
     </footer>
 </body>
 </html>
