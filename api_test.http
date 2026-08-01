@@ -1,0 +1,226 @@
+# API Test 
+# VS Code extension: REST Client
+#
+# Scope:
+# - Transactions API
+# - Categories API
+# - Budgets API
+# - Dashboard API
+#
+#
+# Before testing:
+# 1. Start the Flask application.
+# 2. Log in through the browser.
+# 3. Open Chrome DevTools(F12):
+#       Application > Cookies > http://127.0.0.1:3308 or where the app is running
+# 4. Copy the VALUE of the cookie named "session".
+# 5. Paste it below after @sessionCookie =
+#
+# POST, PUT, and DELETE requests modify the SQLite database.
+# Run `python seed.py` afterward if you need to restore the demo data.
+
+@baseUrl =  http://127.0.0.1:5000
+@sessionCookie = PASTE_FLASK_SESSION_COOKIE_HERE
+# Cookie Example: .eJwlzjEOwyAMBdC7MHcwGIOdy0T-YNSuSTNVvXsj9QJP75P2dcT5TNv7uOKR9tdMW_LuYK5jUQzqjRtZ1V57q4WCiubgUDSMUqyh-co2QT5Ak5zK1IVQEiWMTjMjirCr1iomEA67BeGxCoNB3SrWFLtVzC7ZOd2R64zjv8np-wOX7C7u.amppOQ.kqQ3jjnC-ero4h5x3zgsaAfrKBc
+
+# Update these IDs after running the corresponding POST requests.
+@transactionId = 1
+@categoryId = 1
+@budgetId = 1
+
+
+###############################################################################
+# 1. TRANSACTIONS API
+###############################################################################
+
+### Get all transactions
+# Expected: 200 OK and a JSON list of the logged-in user's transactions.
+GET {{baseUrl}}/api/transactions
+Cookie: session={{sessionCookie}}
+
+
+### Create an expense transaction
+# Copy the returned transaction ID into @transactionId above.
+POST {{baseUrl}}/api/transactions
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "category_id": {{categoryId}},
+    "amount": 99.99,
+    "type": "expense",
+    "date": "2026-07-29",
+    "note": "REST Client transaction test"
+}
+
+
+### Verify the transaction was created
+GET {{baseUrl}}/api/transactions
+Cookie: session={{sessionCookie}}
+
+
+### Update the created transaction
+PUT {{baseUrl}}/api/transactions/{{transactionId}}
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "amount": 125.50,
+    "note": "Updated REST Client transaction test"
+}
+
+
+### Verify the transaction was updated
+GET {{baseUrl}}/api/transactions
+Cookie: session={{sessionCookie}}
+
+
+### Delete the test transaction
+DELETE {{baseUrl}}/api/transactions/{{transactionId}}
+Cookie: session={{sessionCookie}}
+
+
+### Verify the transaction was deleted
+GET {{baseUrl}}/api/transactions
+Cookie: session={{sessionCookie}}
+
+
+### Negative test: update a transaction that does not exist
+# Expected: 404 Not Found.
+PUT {{baseUrl}}/api/transactions/999999
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "amount": 10.00,
+    "note": "This transaction should not exist"
+}
+
+
+###############################################################################
+# 2. CATEGORIES API
+###############################################################################
+
+### Get all categories
+# Expected: 200 OK and a JSON list of the logged-in user's categories.
+GET {{baseUrl}}/api/categories
+Cookie: session={{sessionCookie}}
+
+
+### Create an expense category
+# Copy the returned category ID into @categoryId above if needed.
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "name": "API Testing",
+    "type": "expense"
+}
+
+
+### Verify the category was created
+GET {{baseUrl}}/api/categories
+Cookie: session={{sessionCookie}}
+
+
+
+###############################################################################
+# 3. BUDGETS API
+###############################################################################
+
+### Get all budgets
+# Expected: 200 OK and a JSON list of the logged-in user's budgets.
+GET {{baseUrl}}/api/budgets
+Cookie: session={{sessionCookie}}
+
+
+### Create a monthly budget
+# Use a valid expense category ID.
+# Copy the returned budget ID into @budgetId above.
+POST {{baseUrl}}/api/budgets
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "category_id": {{categoryId}},
+    "month": "2026-08",
+    "limit_amount": 400.00
+}
+
+
+### Verify the budget was created
+GET {{baseUrl}}/api/budgets
+Cookie: session={{sessionCookie}}
+
+
+### Update the budget
+PUT {{baseUrl}}/api/budgets/{{budgetId}}
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "limit_amount": 500.00
+}
+
+
+### Verify the budget was updated
+GET {{baseUrl}}/api/budgets
+Cookie: session={{sessionCookie}}
+
+
+### Negative test: update a budget that does not exist
+# Expected: 404 Not Found.
+PUT {{baseUrl}}/api/budgets/999999
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "limit_amount": 100.00
+}
+
+
+###############################################################################
+# 4. DASHBOARD API
+###############################################################################
+
+### Get dashboard summary
+# Expected: 200 OK with balance, income, and expenses.
+GET {{baseUrl}}/api/dashboard
+Cookie: session={{sessionCookie}}
+
+
+### Record dashboard totals before adding a test expense
+GET {{baseUrl}}/api/dashboard
+Cookie: session={{sessionCookie}}
+
+
+### Add a $100 expense for dashboard verification
+# Copy the returned transaction ID into @transactionId if you want to clean it up.
+POST {{baseUrl}}/api/transactions
+Content-Type: application/json
+Cookie: session={{sessionCookie}}
+
+{
+    "category_id": {{categoryId}},
+    "amount": 100.00,
+    "type": "expense",
+    "date": "2026-07-29",
+    "note": "Dashboard summary verification"
+}
+
+
+### Verify dashboard totals after adding the expense
+# Expected:
+# - expenses increase by $100.00
+# - balance decreases by $100.00
+# - income remains unchanged
+GET {{baseUrl}}/api/dashboard
+Cookie: session={{sessionCookie}}
+
+### Optional cleanup of the dashboard test transaction
+# Set @transactionId to the ID returned by the previous POST request first.
+DELETE {{baseUrl}}/api/transactions/{{transactionId}}
+Cookie: session={{sessionCookie}}
+
+
