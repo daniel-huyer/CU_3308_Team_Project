@@ -19,12 +19,19 @@ async function loadDashboard() {
     const page = document.getElementById('dashboard-page');
     const summaryUrl = page.dataset.summaryUrl;
     const transactionsUrl = page.dataset.transactionsUrl;
+    const categoriesUrl = page.dataset.categoriesUrl;
 
-    const summaryRes = await fetchJSON(summaryUrl);
-    const txRes = await fetchJSON(transactionsUrl);
+    const [summaryRes, txRes, catRes] = await Promise.all([
+        fetchJSON(summaryUrl),
+        fetchJSON(transactionsUrl),
+        fetchJSON(categoriesUrl),
+    ]);
 
     const summary = summaryRes.data;
     const transactions = txRes.data;
+
+    const categoryNameById = {};
+    catRes.data.forEach(c => { categoryNameById[c.id] = c.name; });
 
     document.getElementById('balance').textContent = formatCurrency(summary.balance);
     document.getElementById('income').textContent = formatCurrency(summary.income);
@@ -32,7 +39,7 @@ async function loadDashboard() {
 
     renderRecentTransactions(transactions.slice(0, 5));
     renderSpendingTrend(transactions);
-    renderCategoryBreakdown(transactions);
+    renderCategoryBreakdown(transactions, categoryNameById);
 }
 
 function renderRecentTransactions(transactions) {
@@ -118,7 +125,7 @@ function mostRecentMonthWithExpenses(transactions) {
     return latest.slice(0, 7); // "YYYY-MM"
 }
 
-function renderCategoryBreakdown(transactions) {
+function renderCategoryBreakdown(transactions, categoryNameById) {
     const monthPrefix = mostRecentMonthWithExpenses(transactions);
 
     const byCategoryId = {};
@@ -130,7 +137,9 @@ function renderCategoryBreakdown(transactions) {
             });
     }
 
-    const labels = Object.keys(byCategoryId).map(id => `Category ${id}`);
+    const labels = Object.keys(byCategoryId).map(
+        id => categoryNameById[id] || `Category ${id}`
+    );
     const data = Object.values(byCategoryId);
 
     new Chart(document.getElementById('category-breakdown-chart'), {
