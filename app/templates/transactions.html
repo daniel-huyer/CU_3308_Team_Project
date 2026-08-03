@@ -19,7 +19,11 @@
 <h2 id="transaction-form-title">Add Transaction</h2>
 
 <form id="transaction-form">
-  <input type="hidden" id="transaction_id" name="transaction_id" />
+  <input
+    type="hidden"
+    id="transaction_id"
+    name="transaction_id"
+  />
 
   <label for="type">Transaction Type</label>
   <br />
@@ -64,7 +68,12 @@
   <label for="date">Date</label>
   <br />
 
-  <input type="date" id="date" name="date" required />
+  <input
+    type="date"
+    id="date"
+    name="date"
+    required
+  />
 
   <br /><br />
 
@@ -187,15 +196,20 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("transaction-form");
+    const form =
+      document.getElementById("transaction-form");
     const transactionIdInput =
       document.getElementById("transaction_id");
-    const typeInput = document.getElementById("type");
-    const amountInput = document.getElementById("amount");
+    const typeInput =
+      document.getElementById("type");
+    const amountInput =
+      document.getElementById("amount");
     const categoryInput =
       document.getElementById("category_id");
-    const dateInput = document.getElementById("date");
-    const noteInput = document.getElementById("note");
+    const dateInput =
+      document.getElementById("date");
+    const noteInput =
+      document.getElementById("note");
     const submitButton =
       document.getElementById("transaction-submit");
     const cancelButton =
@@ -220,98 +234,120 @@
     const clearFiltersButton =
       document.getElementById("clear-filters");
     const tableBody =
-      document.getElementById("transaction-table-body");
+      document.getElementById(
+        "transaction-table-body"
+      );
     const historyMessage =
       document.getElementById("history-message");
 
     setDefaultDate();
     loadTransactions();
 
-    form.addEventListener("submit", async function (event) {
-      event.preventDefault();
+    form.addEventListener(
+      "submit",
+      async function (event) {
+        event.preventDefault();
 
-      const transactionId =
-        transactionIdInput.value.trim();
-      const isEditing = transactionId !== "";
+        const transactionId =
+          transactionIdInput.value.trim();
+        const isEditing = transactionId !== "";
 
-      const transactionData = {
-        type: typeInput.value,
-        amount: Number(amountInput.value),
-        category_id: Number(categoryInput.value),
-        date: dateInput.value,
-        note: noteInput.value.trim(),
-      };
+        const transactionData = {
+          type: typeInput.value,
+          amount: Number(amountInput.value),
+          category_id: Number(categoryInput.value),
+          date: dateInput.value,
+          note: noteInput.value.trim(),
+        };
 
-      const url = isEditing
-        ? `/api/transactions/${transactionId}`
-        : "/api/transactions";
+        const url = isEditing
+          ? `/api/transactions/${transactionId}`
+          : "/api/transactions";
 
-      const method = isEditing ? "PUT" : "POST";
+        const method = isEditing ? "PUT" : "POST";
 
-      message.textContent = isEditing
-        ? "Updating transaction..."
-        : "Adding transaction...";
+        message.textContent = isEditing
+          ? "Updating transaction..."
+          : "Adding transaction...";
 
-      submitButton.disabled = true;
+        submitButton.disabled = true;
 
-      try {
-        const response = await fetch(url, {
-          method: method,
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(transactionData),
-        });
+        try {
+          const response = await fetch(url, {
+            method: method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(transactionData),
+          });
 
-        const result = await response.json();
+          const result = await response.json();
 
-        if (!response.ok || result.status !== "success") {
-          throw new Error(
+          if (
+            !response.ok ||
+            result.status !== "success"
+          ) {
+            throw new Error(
+              result.message ||
+              "Unable to save the transaction."
+            );
+          }
+
+          message.textContent =
             result.message ||
-            "Unable to save the transaction."
+            (
+              isEditing
+                ? "Transaction updated successfully."
+                : "Transaction created successfully."
+            );
+
+          resetTransactionForm();
+          await loadTransactions();
+        } catch (error) {
+          console.error(
+            "Transaction request failed:",
+            error
           );
+
+          message.textContent =
+            error.message ||
+            "An unexpected error occurred.";
+        } finally {
+          submitButton.disabled = false;
         }
-
-        message.textContent =
-          result.message ||
-          (isEditing
-            ? "Transaction updated successfully."
-            : "Transaction created successfully.");
-
-        resetTransactionForm();
-        await loadTransactions();
-      } catch (error) {
-        console.error(
-          "Transaction request failed:",
-          error
-        );
-
-        message.textContent =
-          error.message ||
-          "An unexpected error occurred.";
-      } finally {
-        submitButton.disabled = false;
       }
-    });
+    );
 
-    cancelButton.addEventListener("click", function () {
-      resetTransactionForm();
-      message.textContent = "Edit cancelled.";
-    });
+    cancelButton.addEventListener(
+      "click",
+      function () {
+        resetTransactionForm();
+        message.textContent = "Edit cancelled.";
+      }
+    );
 
     filterForm.addEventListener(
       "submit",
-      function (event) {
+      async function (event) {
         event.preventDefault();
-        loadTransactions();
+        await loadTransactions();
       }
     );
 
     clearFiltersButton.addEventListener(
       "click",
-      function () {
-        filterForm.reset();
-        loadTransactions();
+      async function (event) {
+        event.preventDefault();
+
+        keywordFilter.value = "";
+        typeFilter.value = "";
+        categoryFilter.value = "";
+        startDateFilter.value = "";
+        endDateFilter.value = "";
+
+        historyMessage.textContent = "";
+
+        await loadTransactions();
       }
     );
 
@@ -332,29 +368,37 @@
       cancelButton.hidden = true;
     }
 
-    window.beginTransactionEdit = function (transaction) {
-      transactionIdInput.value = transaction.id;
-      typeInput.value = transaction.type;
-      amountInput.value = transaction.amount;
-      categoryInput.value = transaction.category_id;
-      dateInput.value = transaction.date;
-      noteInput.value =
-        transaction.description ||
-        transaction.note ||
-        "";
+    window.beginTransactionEdit =
+      function (transaction) {
+        transactionIdInput.value =
+          transaction.id;
+        typeInput.value =
+          transaction.type;
+        amountInput.value =
+          transaction.amount;
+        categoryInput.value =
+          transaction.category_id;
+        dateInput.value =
+          transaction.date;
+        noteInput.value =
+          transaction.description ||
+          transaction.note ||
+          "";
 
-      formTitle.textContent = "Edit Transaction";
-      submitButton.textContent = "Update Transaction";
-      cancelButton.hidden = false;
+        formTitle.textContent =
+          "Edit Transaction";
+        submitButton.textContent =
+          "Update Transaction";
+        cancelButton.hidden = false;
 
-      message.textContent =
-        `Editing transaction ${transaction.id}.`;
+        message.textContent =
+          `Editing transaction ${transaction.id}.`;
 
-      form.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    };
+        form.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      };
 
     async function loadTransactions() {
       const parameters = new URLSearchParams();
@@ -367,7 +411,10 @@
       }
 
       if (typeFilter.value) {
-        parameters.set("type", typeFilter.value);
+        parameters.set(
+          "type",
+          typeFilter.value
+        );
       }
 
       if (categoryFilter.value) {
@@ -408,10 +455,18 @@
       historyMessage.textContent = "";
 
       try {
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
         const result = await response.json();
 
-        if (!response.ok || result.status !== "success") {
+        if (
+          !response.ok ||
+          result.status !== "success"
+        ) {
           throw new Error(
             result.message ||
             "Unable to load transactions."
@@ -442,9 +497,14 @@
     function renderTransactions(transactions) {
       tableBody.innerHTML = "";
 
-      if (transactions.length === 0) {
-        const emptyRow = document.createElement("tr");
-        const emptyCell = document.createElement("td");
+      if (
+        !Array.isArray(transactions) ||
+        transactions.length === 0
+      ) {
+        const emptyRow =
+          document.createElement("tr");
+        const emptyCell =
+          document.createElement("td");
 
         emptyCell.colSpan = 6;
         emptyCell.textContent =
@@ -455,78 +515,93 @@
         return;
       }
 
-      transactions.forEach(function (transaction) {
-        const row = document.createElement("tr");
+      transactions.forEach(
+        function (transaction) {
+          const row =
+            document.createElement("tr");
 
-        const dateCell = document.createElement("td");
-        dateCell.textContent = transaction.date;
+          const dateCell =
+            document.createElement("td");
+          dateCell.textContent =
+            transaction.date;
 
-        const descriptionCell =
-          document.createElement("td");
-        descriptionCell.textContent =
-          transaction.description || "";
+          const descriptionCell =
+            document.createElement("td");
+          descriptionCell.textContent =
+            transaction.description || "";
 
-        const categoryCell =
-          document.createElement("td");
+          const categoryCell =
+            document.createElement("td");
+          categoryCell.textContent =
+            transaction.category_name ||
+            `Category ${transaction.category_id}`;
 
-        categoryCell.textContent =
-          transaction.category_name ||
-          `Category ${transaction.category_id}`;
+          const typeCell =
+            document.createElement("td");
+          typeCell.textContent =
+            transaction.type;
 
-        const typeCell =
-          document.createElement("td");
-        typeCell.textContent = transaction.type;
+          const amountCell =
+            document.createElement("td");
+          amountCell.textContent =
+            `$${Number(
+              transaction.amount
+            ).toFixed(2)}`;
 
-        const amountCell =
-          document.createElement("td");
-        amountCell.textContent =
-          `$${Number(transaction.amount).toFixed(2)}`;
+          const actionsCell =
+            document.createElement("td");
 
-        const actionsCell =
-          document.createElement("td");
+          const editButton =
+            document.createElement("button");
+          editButton.type = "button";
+          editButton.textContent = "Edit";
 
-        const editButton =
-          document.createElement("button");
-        editButton.type = "button";
-        editButton.textContent = "Edit";
+          editButton.addEventListener(
+            "click",
+            function () {
+              beginTransactionEdit(
+                transaction
+              );
+            }
+          );
 
-        editButton.addEventListener(
-          "click",
-          function () {
-            beginTransactionEdit(transaction);
-          }
-        );
+          const deleteButton =
+            document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.textContent = "Delete";
 
-        const deleteButton =
-          document.createElement("button");
-        deleteButton.type = "button";
-        deleteButton.textContent = "Delete";
+          deleteButton.addEventListener(
+            "click",
+            function () {
+              deleteTransaction(
+                transaction.id
+              );
+            }
+          );
 
-        deleteButton.addEventListener(
-          "click",
-          function () {
-            deleteTransaction(transaction.id);
-          }
-        );
+          actionsCell.appendChild(editButton);
+          actionsCell.appendChild(
+            document.createTextNode(" ")
+          );
+          actionsCell.appendChild(
+            deleteButton
+          );
 
-        actionsCell.appendChild(editButton);
-        actionsCell.appendChild(
-          document.createTextNode(" ")
-        );
-        actionsCell.appendChild(deleteButton);
+          row.appendChild(dateCell);
+          row.appendChild(descriptionCell);
+          row.appendChild(categoryCell);
+          row.appendChild(typeCell);
+          row.appendChild(amountCell);
+          row.appendChild(actionsCell);
 
-        row.appendChild(dateCell);
-        row.appendChild(descriptionCell);
-        row.appendChild(categoryCell);
-        row.appendChild(typeCell);
-        row.appendChild(amountCell);
-        row.appendChild(actionsCell);
-
-        tableBody.appendChild(row);
-      });
+          tableBody.appendChild(row);
+        }
+      );
     }
 
-    async function deleteTransaction(transactionId) {
+    async function deleteTransaction(
+      transactionId
+    ) {
       const confirmed = window.confirm(
         "Are you sure you want to delete this transaction?"
       );
@@ -543,12 +618,18 @@
           `/api/transactions/${transactionId}`,
           {
             method: "DELETE",
+            headers: {
+              Accept: "application/json",
+            },
           }
         );
 
         const result = await response.json();
 
-        if (!response.ok || result.status !== "success") {
+        if (
+          !response.ok ||
+          result.status !== "success"
+        ) {
           throw new Error(
             result.message ||
             "Unable to delete the transaction."
