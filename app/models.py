@@ -8,6 +8,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.db import db
 
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
@@ -47,7 +48,7 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
-        return self.check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password_hash, password)
 
     @property
     def is_admin(self):
@@ -66,11 +67,13 @@ class Category(db.Model):
         "User",
         back_populates="categories",
     )
+
     transactions = db.relationship(
         "Transaction",
         back_populates="category",
         cascade="all, delete-orphan",
     )
+
     budgets = db.relationship(
         "Budget",
         back_populates="category",
@@ -90,17 +93,30 @@ class Category(db.Model):
         ),
     )
 
+
 class Transaction(db.Model):
     __tablename__ = "transactions"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False
+    )
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("categories.id"),
+        nullable=False
+    )
     amount = db.Column(db.Numeric(12, 2), nullable=False)
-    type = db.Column(db.String(20),nullable=False)
+    type = db.Column(db.String(20), nullable=False)
     date = db.Column(db.Date, nullable=False, default=date.today)
     note = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    created_at = db.Column(
+        db.DateTime,
+        nullable=False,
+        default=lambda: datetime.now(UTC)
+    )
 
     user = db.relationship(
         "User",
@@ -123,12 +139,21 @@ class Transaction(db.Model):
         ),
     )
 
+
 class Budget(db.Model):
     __tablename__ = "budgets"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey("categories.id"), nullable=False)
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=False
+    )
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("categories.id"),
+        nullable=False
+    )
     month = db.Column(db.String(7), nullable=False)
     limit_amount = db.Column(db.Numeric(12, 2), nullable=False)
 
@@ -136,6 +161,7 @@ class Budget(db.Model):
         "User",
         back_populates="budgets",
     )
+
     category = db.relationship(
         "Category",
         back_populates="budgets",
@@ -163,6 +189,3 @@ class Budget(db.Model):
             raise ValueError("month must use YYYY-MM format")
 
         return value
-
-
-
