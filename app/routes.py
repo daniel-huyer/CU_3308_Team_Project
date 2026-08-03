@@ -14,6 +14,7 @@ def index():
     return render_template('home.html')
 
 @main.route('/dashboard')
+@login_required
 def dashboard():
     return render_template('dashboard.html')
 
@@ -196,6 +197,7 @@ def update_budget(bid):
 
 # ======================== Dashboard Summary ========================
 @main.route('/api/dashboard', methods=['GET'])
+@login_required
 def dashboard_summary():
 
     user_id = current_user.id
