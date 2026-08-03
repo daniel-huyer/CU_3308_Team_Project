@@ -7,6 +7,10 @@
     <h1>Dashboard</h1>
     <h3>Hi {{ current_user.username }},</h3>
 
+    <div id="dashboard-page"
+         data-summary-url="{{ url_for('main.dashboard_summary') }}"
+         data-transactions-url="{{ url_for('main.get_transactions') }}">
+
     <div class="card-grid">
         <div class="card">
             <div class="form-group"><label>Current Balance</label></div>
@@ -21,7 +25,6 @@
             <h2 id="expenses" class="amount-expense">$0.00</h2>
         </div>
     </div>
-
     <div class="card-grid">
         <div class="card">
             <div class="form-group"><label>Spending Trend (30 Days)</label></div>
@@ -32,13 +35,12 @@
             <canvas id="category-breakdown-chart" height="200"></canvas>
         </div>
     </div>
-
     <div class="card">
         <div class="form-group"><label>Recent Transactions</label></div>
         <div id="recent-transactions"></div>
     </div>
-
     <a href="#" class="btn btn-primary">+ Add Transaction</a>
+    </div>
 {% endblock %}
 <!-- end main -->
 <!-- footer get's included from base.html -->
