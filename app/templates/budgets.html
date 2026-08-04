@@ -16,67 +16,63 @@
 
     <form id="budget-form">
         <!-- Stores the budget ID while editing -->
-        <input
-            type="hidden"
-            id="budget_id"
-            name="budget_id"
-        />
+        <div class="form-group">
+            <input
+                type="hidden"
+                id="budget_id"
+                name="budget_id"
+            />
+            <label for="category_id">Category</label>
+            <select
+                id="category_id"
+                name="category_id"
+                required
+            >
+                <option value="">Select Category</option>
+            </select>
+        </div>
 
-        <label for="category_id">Category</label>
-        <br />
+        <div class="form-group">
+            <label for="month">Month</label>    
+            <input
+                type="month"
+                id="month"
+                name="month"
+                required
+            />
+        </div>
+        <div class="form-group">
+            <label for="limit_amount">Budget Limit</label>    
+            <input
+                type="number"
+                id="limit_amount"
+                name="limit_amount"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                required
+            />
+        </div>
 
-        <select
-            id="category_id"
-            name="category_id"
-            required
-        >
-            <option value="">Select Category</option>
-        </select>
+        <div class="form-group">
+            <button
+                type="submit"
+                id="budget-submit"
+                class="btn"
+            >
+                Add Budget
+            </button>
+        </div>
 
-        <br /><br />
-
-        <label for="month">Month</label>
-        <br />
-
-        <input
-            type="month"
-            id="month"
-            name="month"
-            required
-        />
-
-        <br /><br />
-
-        <label for="limit_amount">Budget Limit</label>
-        <br />
-
-        <input
-            type="number"
-            id="limit_amount"
-            name="limit_amount"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            required
-        />
-
-        <br /><br />
-
-        <button
-            type="submit"
-            id="budget-submit"
-            class="btn"
-        >
-            Add Budget
-        </button>
-
-        <button
-            type="button"
-            id="cancel-budget-edit"
-            hidden
-        >
-            Cancel Edit
-        </button>
+        <div class="form-group">
+            <button
+                type="button"
+                id="cancel-budget-edit"
+                hidden
+            >
+                Cancel Edit
+            </button>
+        </div>
     </form>
 
     <p id="budget-message" role="status"></p>
