@@ -1,9 +1,10 @@
+from datetime import date
 from decimal import Decimal
 
 from werkzeug.security import generate_password_hash
 
 from app.db import db
-from app.models import Budget, Category, User
+from app.models import Budget, Category, Transaction, User
 
 
 def create_test_user(
@@ -130,6 +131,7 @@ def test_update_budget(client, app):
             budget_id,
         )
 
+        assert updated_budget is not None
         assert updated_budget.limit_amount == Decimal("650.00")
 
 
@@ -207,8 +209,90 @@ def test_list_budgets(client, app):
 
     assert response_data["status"] == "success"
     assert len(response_data["data"]) == 1
-    assert response_data["data"][0]["month"] == "2026-08"
-    assert response_data["data"][0]["limit_amount"] == 500.00
+
+    budget_data = response_data["data"][0]
+
+    assert budget_data["month"] == "2026-08"
+    assert budget_data["limit_amount"] == 500.00
+    assert budget_data["spent_amount"] == 0.00
+    assert budget_data["remaining_amount"] == 500.00
+
+
+def test_budget_summary_remaining_amount(client, app):
+    with app.app_context():
+        user = create_test_user()
+        category = create_test_category(user)
+
+        budget = Budget(
+            user_id=user.id,
+            category_id=category.id,
+            month="2026-08",
+            limit_amount=Decimal("500.00"),
+        )
+
+        first_expense = Transaction(
+            user_id=user.id,
+            category_id=category.id,
+            amount=Decimal("125.00"),
+            type="expense",
+            date=date(2026, 8, 5),
+            note="Groceries",
+        )
+
+        second_expense = Transaction(
+            user_id=user.id,
+            category_id=category.id,
+            amount=Decimal("75.00"),
+            type="expense",
+            date=date(2026, 8, 20),
+            note="More groceries",
+        )
+
+        previous_month_expense = Transaction(
+            user_id=user.id,
+            category_id=category.id,
+            amount=Decimal("100.00"),
+            type="expense",
+            date=date(2026, 7, 25),
+            note="July groceries",
+        )
+
+        income_transaction = Transaction(
+            user_id=user.id,
+            category_id=category.id,
+            amount=Decimal("50.00"),
+            type="income",
+            date=date(2026, 8, 15),
+            note="Refund",
+        )
+
+        db.session.add_all(
+            [
+                budget,
+                first_expense,
+                second_expense,
+                previous_month_expense,
+                income_transaction,
+            ]
+        )
+        db.session.commit()
+
+    login_test_user(client)
+
+    response = client.get("/api/budgets")
+
+    assert response.status_code == 200
+
+    response_data = response.get_json()
+
+    assert response_data["status"] == "success"
+    assert len(response_data["data"]) == 1
+
+    budget_summary = response_data["data"][0]
+
+    assert budget_summary["limit_amount"] == 500.00
+    assert budget_summary["spent_amount"] == 200.00
+    assert budget_summary["remaining_amount"] == 300.00
 
 
 def test_unauthorized_budget_access_redirects(client):

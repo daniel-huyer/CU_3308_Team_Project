@@ -143,16 +143,63 @@ def create_category():
 @main.route('/api/budgets', methods=['GET'])
 @login_required
 def get_budgets():
-    
-    budgets = Budget.query.filter_by(user_id=current_user.id).all()
+    budgets = Budget.query.filter_by(
+        user_id=current_user.id
+    ).all()
+
+    budget_data = []
+
+    for budget in budgets:
+        month_start = datetime.strptime(
+            budget.month,
+            "%Y-%m"
+        ).date()
+
+        if month_start.month == 12:
+            next_month = date(
+                month_start.year + 1,
+                1,
+                1
+            )
+        else:
+            next_month = date(
+                month_start.year,
+                month_start.month + 1,
+                1
+            )
+
+        spent_amount = db.session.query(
+            db.func.sum(Transaction.amount)
+        ).filter(
+            Transaction.user_id == current_user.id,
+            Transaction.category_id == budget.category_id,
+            Transaction.type == "expense",
+            Transaction.date >= month_start,
+            Transaction.date < next_month
+        ).scalar() or 0
+
+        remaining_amount = (
+            budget.limit_amount - spent_amount
+        )
+
+        budget_data.append({
+            "id": budget.id,
+            "category_id": budget.category_id,
+            "month": budget.month,
+            "limit_amount": float(
+                budget.limit_amount
+            ),
+            "spent_amount": float(
+                spent_amount
+            ),
+            "remaining_amount": float(
+                remaining_amount
+            )
+        })
+
     return jsonify({
         "status": "success",
-        "data": [{
-            "id": b.id,
-            "category_id": b.category_id,
-            "month": b.month,
-            "limit_amount": float(b.limit_amount)
-        } for b in budgets]
+        "data": budget_data
     })
 
 @main.route('/api/budgets', methods=['POST'])
