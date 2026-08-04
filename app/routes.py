@@ -30,6 +30,7 @@ def index():
 
 
 @main.route("/dashboard")
+@login_required
 def dashboard():
     return render_template(
         "dashboard.html"

@@ -107,6 +107,38 @@ The same commands work in both environments. `prefix.py` detects whether it's ru
 
 ---
 
+## Deployment on Render
+
+The app is deployed at: https://cu-3308-team-project.onrender.com
+
+### Running Migrations on Render (one-time or after schema changes)
+
+Since the free tier doesn't support Pre-Deploy Commands, run migrations manually from your local machine using the External Database URL from the Render Postgres dashboard:
+
+```bash
+DATABASE_URL=<external-database-url> flask db upgrade
+```
+
+### Seeding Demo Data on Render
+
+```bash
+DATABASE_URL=<external-database-url> python seed.py
+```
+
+### Environment Variables (set in Render dashboard)
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | Internal Database URL from Render Postgres |
+| `SECRET_KEY` | Strong random string |
+| `FLASK_APP` | `prefix.py` |
+
+### Notes
+
+- The Postgres free tier expires **September 2, 2026** — upgrade or recreate before then
+- Free web service instances spin down after inactivity — first request after idle may be slow
+- `prefix.py` proxy middleware has no effect on Render (no JupyterHub) — URLs work normally
+
 ## Project Structure
 
 ```
