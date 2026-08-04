@@ -1,14 +1,48 @@
 {% extends 'base.html' %}
-
-{% block title %}Budges - JGT Finance{% endblock %}
-
+{% block title %}Budgets - JGT Finance{% endblock %}
 {% block styles %}<!-- page specific style sheet if wanted -->{% endblock %}
 <!-- header/nav get's included from base.html -->
 <!-- start main -->
 {% block content %}
+<div id="budgets-page"
+     data-budgets-url="{{ url_for('main.get_budgets') }}"
+     data-categories-url="{{ url_for('main.get_categories') }}"
+     data-transactions-url="{{ url_for('main.get_transactions') }}">
+
     <h1>Budgets</h1>
     <h3>Hi {{ current_user.username }},</h3>
-    <p>Welcome to your Budgets</p>
+
+    <div class="card">
+        <div class="form-group"><label>Set a Budget</label></div>
+        <form id="budget-form">
+            <div class="form-group">
+                <label for="budget-month">Month</label>
+                <input type="month" id="budget-month" name="month" required>
+            </div>
+            <div class="form-group">
+                <label for="budget-category">Category</label>
+                <select id="budget-category" name="category_id" required>
+                    <option value="">Select Category</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="budget-limit">Limit Amount</label>
+                <input type="number" id="budget-limit" name="limit_amount" step="0.01" min="0.01" placeholder="0.00" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Budget</button>
+        </form>
+        <p id="budget-form-message"></p>
+    </div>
+
+    <div class="card">
+        <div class="form-group"><label>Budgets for <span id="budget-list-month"></span></label></div>
+        <div id="budget-list"></div>
+    </div>
+
+</div>
 {% endblock %}
 <!-- end main -->
 <!-- footer get's included from base.html -->
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/budgets.js') }}"></script>
+{% endblock %}
