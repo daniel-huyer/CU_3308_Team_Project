@@ -27,6 +27,7 @@ def transactions():
 
 
 @main.route("/budgets")
+@login_required
 def budgets():
     return render_template("budgets.html")
 
