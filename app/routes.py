@@ -7,31 +7,36 @@ from app.db import db
 from app.models import User, Transaction, Category, Budget
 from datetime import date, datetime
 
-main = Blueprint('main', __name__)
+main = Blueprint("main", __name__)
 
-@main.route('/')
+
+@main.route("/")
 def index():
-    return render_template('home.html')
+    return render_template("home.html")
 
-@main.route('/dashboard')
+@main.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    return render_template("dashboard.html")
 
-@main.route('/transactions')
+
+@main.route("/transactions")
+@login_required
 def transactions():
-    return render_template('transactions.html')
+    return render_template("transactions.html")
 
-@main.route('/budgets')
+
+@main.route("/budgets")
 def budgets():
-    return render_template('budgets.html')
+    return render_template("budgets.html")
 
-@main.route('/admin/users')
+
+@main.route("/admin/users")
 @login_required
 def db_test():
     if not current_user.is_admin:
         abort(403)
-    from app.models import User
+
     users = User.query.all()
     return render_template('admin/users.html', users=users)
 
@@ -40,9 +45,27 @@ def db_test():
 @main.route('/api/transactions', methods=['GET'])
 @login_required
 def get_transactions():
-    
-    transactions = Transaction.query.filter_by(user_id=current_user.id).order_by(Transaction.date.desc()).all()
-    
+    query = Transaction.query.filter_by(user_id=current_user.id)
+
+    keyword = request.args.get('keyword')
+    type_filter = request.args.get('type')
+    category_id = request.args.get('category_id')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if keyword:
+        query = query.filter(Transaction.note.ilike(f'%{keyword}%'))
+    if type_filter:
+        query = query.filter(Transaction.type == type_filter)
+    if category_id:
+        query = query.filter(Transaction.category_id == int(category_id))
+    if start_date:
+        query = query.filter(Transaction.date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+    if end_date:
+        query = query.filter(Transaction.date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+
+    transactions = query.order_by(Transaction.date.desc()).all()
+
     return jsonify({
         "status": "success",
         "data": [{
@@ -50,6 +73,7 @@ def get_transactions():
             "date": t.date.isoformat(),
             "description": t.note,
             "category_id": t.category_id,
+            "category_name": t.category.name if t.category else None,
             "amount": float(t.amount),
             "type": t.type
         } for t in transactions]
