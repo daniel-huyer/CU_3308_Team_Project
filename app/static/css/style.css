@@ -155,6 +155,10 @@ th {
   letter-spacing: 0.03em;
 }
 
+hr {
+    margin: 20px 0;
+}
+
 .amount-income { color: var(--color-accent-green); }
 .amount-expense { color: var(--color-accent-red); }
 
