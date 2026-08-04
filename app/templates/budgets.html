@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Budges - JGT Finance{% endblock %}
+{% block title %}Budgets - JGT Finance{% endblock %}
 
 {% block styles %}<!-- page specific style sheet if wanted -->{% endblock %}
 <!-- header/nav get's included from base.html -->
@@ -9,6 +9,118 @@
     <h1>Budgets</h1>
     <h3>Hi {{ current_user.username }},</h3>
     <p>Welcome to your Budgets</p>
-{% endblock %}
+
+    <hr />
+
+    <h2 id="budget-form-title">Add Budget</h2>
+
+    <form id="budget-form">
+        <!-- Stores the budget ID while editing -->
+        <div class="form-group">
+            <input
+                type="hidden"
+                id="budget_id"
+                name="budget_id"
+            />
+            <label for="category_id">Category</label>
+            <select
+                id="category_id"
+                name="category_id"
+                required
+            >
+                <option value="">Select Category</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="month">Month</label>    
+            <input
+                type="month"
+                id="month"
+                name="month"
+                required
+            />
+        </div>
+        <div class="form-group">
+            <label for="limit_amount">Budget Limit</label>    
+            <input
+                type="number"
+                id="limit_amount"
+                name="limit_amount"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                required
+            />
+        </div>
+
+        <div class="form-group">
+            <button
+                type="submit"
+                id="budget-submit"
+                class="btn"
+            >
+                Add Budget
+            </button>
+        </div>
+
+        <div class="form-group">
+            <button
+                type="button"
+                id="cancel-budget-edit"
+                hidden
+            >
+                Cancel Edit
+            </button>
+        </div>
+    </form>
+
+    <p id="budget-message" role="status"></p>
+
+    <hr />
+
+    <h2>Budget List</h2>
+
+    <p id="budget-list-message" role="status"></p>
+
+    <div style="overflow-x: auto;">
+        <p id="no-budgets-message" hidden>
+            No budgets found.
+        </p>
+
+        <table id="budget-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Category</th>
+                    <th>Limit</th>
+                    <th>Spent</th>
+                    <th>Remaining</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="budget-table-body">
+                <tr>
+                    <td colspan="6">
+                        Loading budgets...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+  {% endblock %}
 <!-- end main -->
+
+{% block scripts %}
+    <script>
+        const API_BASE = "{{ url_for('main.get_categories') | replace('/api/categories', '') }}";
+    </script>
+
+    <script
+        src="{{ url_for('static', filename='js/budgets.js') }}"
+        defer
+    ></script>
+{% endblock %}
 <!-- footer get's included from base.html -->
