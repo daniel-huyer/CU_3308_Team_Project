@@ -34,6 +34,24 @@ document.addEventListener("DOMContentLoaded", function () {
     const applyFiltersButton = document.getElementById(
         "apply-filters"
     );
+    const filterForm = document.getElementById(
+        "transaction-filter-form"
+    );
+    const formTitle = document.getElementById(
+        "transaction-form-title"
+    );
+    const historyMessage = document.getElementById(
+        "history-message"
+    );
+    const categoryFilter = document.getElementById(
+        "filter-category"
+    );
+    const startDateFilter = document.getElementById(
+        "filter-start-date"
+    );
+    const endDateFilter = document.getElementById(
+        "filter-end-date"
+    );
     
     if (!form || !tableBody) {
         return;
@@ -59,20 +77,35 @@ document.addEventListener("DOMContentLoaded", function () {
     
     function buildQueryString() {
         const parameters = new URLSearchParams();
-    
+
         const searchValue = searchInput?.value.trim();
         const typeValue = typeFilter?.value;
-    
+        const categoryValue = categoryFilter?.value;
+        const startDateValue = startDateFilter?.value;
+        const endDateValue = endDateFilter?.value;
+
         if (searchValue) {
-            parameters.set("search", searchValue);
+            parameters.set("keyword", searchValue);
         }
-    
+
         if (typeValue) {
             parameters.set("type", typeValue);
         }
-    
+
+        if (categoryValue) {
+            parameters.set("category_id", categoryValue);
+        }
+
+        if (startDateValue) {
+            parameters.set("start_date", startDateValue);
+        }
+
+        if (endDateValue) {
+            parameters.set("end_date", endDateValue);
+        }
+
         const queryString = parameters.toString();
-    
+
         return queryString ? `?${queryString}` : "";
     }
     
@@ -122,14 +155,13 @@ document.addEventListener("DOMContentLoaded", function () {
     
         transactions.forEach(function (transaction) {
             const row = document.createElement("tr");
-    
+
             row.appendChild(createCell(transaction.date));
-            row.appendChild(createCell(transaction.type));
+            row.appendChild(createCell(
+                transaction.note || transaction.description || ""));
             row.appendChild(createCell(getCategoryName(transaction)));
+            row.appendChild(createCell(transaction.type));
             row.appendChild(createCell(formatAmount(transaction.amount)));
-            row.appendChild(
-                createCell(transaction.note || transaction.description || "")
-            );
     
             const actionsCell = document.createElement("td");
             
@@ -176,9 +208,10 @@ document.addEventListener("DOMContentLoaded", function () {
     
     async function loadTransactions() {
         const queryString = buildQueryString();
-    
+
         clearMessage();
-    
+        if (historyMessage) historyMessage.textContent = "";
+
         try {
             const response = await fetch(
                 `${API_BASE}/api/transactions${queryString}`,
@@ -190,27 +223,32 @@ document.addEventListener("DOMContentLoaded", function () {
                     credentials: "include"
                 }
             );
-    
+
             const result = await response.json();
-    
+
             if (!response.ok || result.status !== "success") {
                 throw new Error(
                     result.message || "Unable to load transactions."
                 );
             }
-    
+
             const transactions = extractTransactions(result);
-    
+
             renderTransactions(transactions);
         } catch (error) {
             tableBody.innerHTML = "";
-    
+
             if (noTransactionsMessage) {
                 noTransactionsMessage.hidden = false;
                 noTransactionsMessage.textContent =
                     "Unable to load transactions.";
             }
-    
+
+            if (historyMessage) {
+                historyMessage.textContent =
+                    error.message || "Unable to load transactions.";
+            }
+
             showMessage(error.message, true);
         }
     }
@@ -218,20 +256,27 @@ document.addEventListener("DOMContentLoaded", function () {
     async function loadCategories() {
         try {
             const response = await fetch(`${API_BASE}/api/categories`, {
-            credentials: "include"
-        });
+                credentials: "include"
+            });
             const result = await response.json();
     
             if (!response.ok || result.status !== 'success') return;
     
             const categorySelect = document.getElementById('category_id');
-            categorySelect.innerHTML = '<option value="">Select Category</option>';
+            const filterCategorySelect = document.getElementById('filter-category');
+    
+            const defaultOption = '<option value="">Select Category</option>';
+            const filterDefaultOption = '<option value="">All Categories</option>';
+    
+            categorySelect.innerHTML = defaultOption;
+            filterCategorySelect.innerHTML = filterDefaultOption;
     
             result.data.forEach(function(category) {
                 const option = document.createElement('option');
                 option.value = category.id;
                 option.textContent = `${category.name} (${category.type})`;
                 categorySelect.appendChild(option);
+                filterCategorySelect.appendChild(option.cloneNode(true));
             });
         } catch (error) {
             console.error('Unable to load categories:', error);
@@ -259,13 +304,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const endpoint = isEditing
             ? `${API_BASE}/api/transactions/${transactionId}`
             : `${API_BASE}/api/transactions`;
-    
+
         const method = isEditing ? "PUT" : "POST";
         const payload = buildTransactionPayload();
-    
+
         try {
             submitButton.disabled = true;
-    
+
             const response = await fetch(endpoint, {
                 method: method,
                 headers: {
@@ -309,19 +354,27 @@ document.addEventListener("DOMContentLoaded", function () {
         dateInput.value = transaction.date ?? "";
         noteInput.value =
             transaction.note || transaction.description || "";
-    
+
+        if (formTitle) formTitle.textContent = "Edit Transaction";
         submitButton.textContent = "Update Transaction";
         cancelEditButton.hidden = false;
-    
+
+        if (historyMessage) {
+            historyMessage.textContent =
+                `Editing transaction ${transaction.id}.`;
+        }
+
         form.scrollIntoView({
             behavior: "smooth",
             block: "start"
         });
     }
-    
+
     function resetTransactionForm() {
         form.reset();
         transactionIdInput.value = "";
+        setDefaultDate();
+        if (formTitle) formTitle.textContent = "Add Transaction";
         submitButton.textContent = "Add Transaction";
         cancelEditButton.hidden = true;
     }
@@ -378,6 +431,12 @@ document.addEventListener("DOMContentLoaded", function () {
         "click",
         loadTransactions
     );
+
+    filterForm?.addEventListener("submit", function(event) {
+            event.preventDefault();
+            loadTransactions();
+        });
+
     
     clearFiltersButton?.addEventListener("click", function () {
         if (searchInput) {
@@ -386,6 +445,15 @@ document.addEventListener("DOMContentLoaded", function () {
     
         if (typeFilter) {
             typeFilter.value = "";
+        }
+        if (categoryFilter) {
+            categoryFilter.value = "";
+        }
+        if (startDateFilter) {
+            startDateFilter.value = "";
+        }
+        if (endDateFilter) {
+            endDateFilter.value = "";
         }
     
         loadTransactions();
@@ -417,6 +485,14 @@ document.addEventListener("DOMContentLoaded", function () {
         deleteTransaction(transactionId);
     });
     
+    function setDefaultDate() {
+        if (!dateInput.value) {
+            dateInput.value =
+                new Date().toISOString().split("T")[0];
+        }
+    }
+
+    setDefaultDate();
     loadCategories();
     loadTransactions();
     
