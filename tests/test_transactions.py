@@ -228,6 +228,160 @@ def test_list_transactions(client, app):
     assert "First transaction" in descriptions
     assert "Second transaction" in descriptions
 
+def test_list_transactions_with_filters(client, app):
+    with app.app_context():
+        user = create_test_user()
+
+        food_category = create_test_category(
+            user,
+            name="Food",
+            category_type="expense",
+        )
+
+        transportation_category = create_test_category(
+            user,
+            name="Transportation",
+            category_type="expense",
+        )
+
+        matching_transaction = Transaction(
+            user_id=user.id,
+            category_id=food_category.id,
+            amount=Decimal("25.00"),
+            type="expense",
+            date=date(2026, 8, 10),
+            note="Weekly groceries",
+        )
+
+        wrong_keyword_transaction = Transaction(
+            user_id=user.id,
+            category_id=food_category.id,
+            amount=Decimal("15.00"),
+            type="expense",
+            date=date(2026, 8, 11),
+            note="Coffee",
+        )
+
+        wrong_category_transaction = Transaction(
+            user_id=user.id,
+            category_id=transportation_category.id,
+            amount=Decimal("40.00"),
+            type="expense",
+            date=date(2026, 8, 10),
+            note="Weekly groceries",
+        )
+
+        outside_date_transaction = Transaction(
+            user_id=user.id,
+            category_id=food_category.id,
+            amount=Decimal("75.00"),
+            type="expense",
+            date=date(2026, 7, 15),
+            note="Weekly groceries",
+        )
+
+        db.session.add_all(
+            [
+                matching_transaction,
+                wrong_keyword_transaction,
+                wrong_category_transaction,
+                outside_date_transaction,
+            ]
+        )
+        db.session.commit()
+
+        food_category_id = food_category.id
+        matching_transaction_id = matching_transaction.id
+
+    login_test_user(client)
+
+    response = client.get(
+        "/api/transactions",
+        query_string={
+            "keyword": "groceries",
+            "category_id": food_category_id,
+            "start_date": "2026-08-01",
+            "end_date": "2026-08-31",
+        },
+    )
+
+    assert response.status_code == 200
+
+    response_data = response.get_json()
+
+    assert response_data["status"] == "success"
+    assert len(response_data["data"]) == 1
+    assert response_data["data"][0]["id"] == matching_transaction_id
+    assert (
+        response_data["data"][0]["description"]
+        == "Weekly groceries"
+    )
+
+
+def test_list_transactions_with_type_filter(client, app):
+    with app.app_context():
+        user = create_test_user()
+
+        expense_category = create_test_category(
+            user,
+            name="Food",
+            category_type="expense",
+        )
+
+        income_category = create_test_category(
+            user,
+            name="Paycheck",
+            category_type="income",
+        )
+
+        expense_transaction = Transaction(
+            user_id=user.id,
+            category_id=expense_category.id,
+            amount=Decimal("25.00"),
+            type="expense",
+            date=date(2026, 8, 10),
+            note="Groceries",
+        )
+
+        income_transaction = Transaction(
+            user_id=user.id,
+            category_id=income_category.id,
+            amount=Decimal("1200.00"),
+            type="income",
+            date=date(2026, 8, 10),
+            note="Paycheck",
+        )
+
+        db.session.add_all(
+            [
+                expense_transaction,
+                income_transaction,
+            ]
+        )
+        db.session.commit()
+
+        expense_transaction_id = expense_transaction.id
+
+    login_test_user(client)
+
+    response = client.get(
+        "/api/transactions",
+        query_string={
+            "type": "expense",
+        },
+    )
+
+    assert response.status_code == 200
+
+    response_data = response.get_json()
+
+    assert response_data["status"] == "success"
+    assert len(response_data["data"]) == 1
+    assert (
+        response_data["data"][0]["id"]
+        == expense_transaction_id
+    )
+    assert response_data["data"][0]["type"] == "expense"
 
 @pytest.mark.parametrize(
     "method,url",
