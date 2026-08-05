@@ -1,15 +1,17 @@
 :root {
-  --color-bg: #201b17;
-  --color-surface: #3e3530;
-  --color-surface-alt: #2b2521;
-  --color-text: #d2c8c9;
-  --color-muted: #9c968e;
-  --color-border: #55483f;
-  --color-primary: #5972b1;
-  --color-accent-gold: #d0a650;
-  --color-accent-green: #4f7c3b;
-  --color-accent-red: #962324;
-  --color-accent-orange: #c26f40;
+  --color-bg: #121212;
+  --color-surface: #ffffff;
+  --color-surface-alt: #f1f3f6;
+  --color-text: #f0f0f0;
+  --color-text-on-surface: #1a1a1a;
+  --color-muted: #6b7280;
+  --color-border: #333333;
+  --color-border-light: #e2e5ea;
+  --color-primary: #3b82f6;
+  --color-accent-gold: #f5b942;
+  --color-accent-green: #22c55e;
+  --color-accent-red: #ef4444;
+  --color-accent-orange: #fb923c;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -32,13 +34,14 @@ a { color: inherit; }
   justify-content: space-between;
   padding: 0.75rem 1.5rem;
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text-on-surface);
 }
 
 .navbar-brand {
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--color-text-on-surface);
   text-decoration: none;
 }
 
@@ -49,7 +52,7 @@ a { color: inherit; }
 }
 
 .navbar-links a {
-  color: var(--color-text);
+  color: var(--color-text-on-surface);
   text-decoration: none;
   font-size: 0.95rem;
   transition: color 0.15s ease;
@@ -91,10 +94,11 @@ h3 { font-size: 1.05rem; font-weight: 500; color: var(--color-muted); margin-bot
 
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-light);
   border-radius: 10px;
   padding: 1.25rem;
   margin-bottom: 1.25rem;
+  color: var(--color-text-on-surface);
 }
 
 .card-grid {
@@ -102,6 +106,14 @@ h3 { font-size: 1.05rem; font-weight: 500; color: var(--color-muted); margin-bot
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
+}
+
+.card-label label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-on-surface);
+  margin-bottom: 0.35rem;
 }
 
 .btn {
@@ -120,7 +132,7 @@ h3 { font-size: 1.05rem; font-weight: 500; color: var(--color-muted); margin-bot
 
 .btn-primary { background: var(--color-primary); color: #fff; }
 .btn-danger { background: var(--color-accent-red); color: #fff; }
-.btn-secondary { background: var(--color-surface-alt); color: var(--color-text); border: 1px solid var(--color-border); }
+.btn-secondary { background: var(--color-surface-alt); color: var(--color-text-on-surface); border: 1px solid var(--color-border-light); }
 
 [hidden] {
     display: none !important;
@@ -132,10 +144,12 @@ h3 { font-size: 1.05rem; font-weight: 500; color: var(--color-muted); margin-bot
 
 .form-group label {
   display: block;
-  font-size: 0.85rem;
-  color: var(--color-muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
   margin-bottom: 0.35rem;
 }
+
 
 .form-group input,
 .form-group select,
@@ -143,9 +157,9 @@ h3 { font-size: 1.05rem; font-weight: 500; color: var(--color-muted); margin-bot
   width: 100%;
   padding: 0.5rem 0.65rem;
   background: var(--color-surface-alt);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-light);
   border-radius: 6px;
-  color: var(--color-text);
+  color: var(--color-text-on-surface);
   font-size: 0.95rem;
 }
 
@@ -164,7 +178,7 @@ table {
 th, td {
   text-align: left;
   padding: 0.6rem 0.75rem;
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border-light);
   font-size: 0.9rem;
 }
 
@@ -193,7 +207,7 @@ hr {
 
 .btn-footer {
     margin: 1rem 0;
-    background: var(--color-text); 
+    background: var(--color-text);
     color: var(--color-bg);
 }
 

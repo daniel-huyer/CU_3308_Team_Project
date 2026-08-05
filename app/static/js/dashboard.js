@@ -1,5 +1,19 @@
 // app/static/js/dashboard.js
 
+const CATEGORY_COLORS = {
+    Food: '#3b82f6',
+    Transportation: '#f5b942',
+    Utilities: '#ef4444',
+    Entertainment: '#22c55e',
+    Healthcare: '#fb923c',
+    Housing: '#a855f7',
+    Gift: '#06b6d4',
+    Paycheck: '#10b981',
+};
+function getCategoryColor(categoryName) {
+    return CATEGORY_COLORS[categoryName] || '#6b7280';
+}
+
 async function fetchJSON(url) {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Request to ${url} failed: ${res.status}`);
@@ -37,12 +51,12 @@ async function loadDashboard() {
     document.getElementById('income').textContent = formatCurrency(summary.income);
     document.getElementById('expenses').textContent = formatCurrency(summary.expenses);
 
-    renderRecentTransactions(transactions.slice(0, 5));
+    renderRecentTransactions(transactions.slice(0, 5), categoryNameById);
     renderSpendingTrend(transactions);
     renderCategoryBreakdown(transactions, categoryNameById);
 }
 
-function renderRecentTransactions(transactions) {
+function renderRecentTransactions(transactions, categoryNameById) {
     const list = document.getElementById('recent-transactions');
     list.innerHTML = '';
 
@@ -57,8 +71,18 @@ function renderRecentTransactions(transactions) {
         row.style.justifyContent = 'space-between';
         row.style.padding = '0.5rem 0';
 
+        const categoryName = categoryNameById[t.category_id] || 'Uncategorized';
+
         const label = document.createElement('span');
-        label.textContent = t.description || '(no description)';
+        const categoryTag = document.createElement('span');
+        categoryTag.textContent = categoryName;
+        categoryTag.style.color = getCategoryColor(categoryName);
+        categoryTag.style.fontWeight = '600';
+        categoryTag.style.display = 'inline-block';
+        categoryTag.style.minWidth = '140px';
+        categoryTag.style.marginRight = '0.5rem';
+        label.appendChild(categoryTag);
+        label.appendChild(document.createTextNode(t.description || '(no description)'));
 
         const amount = document.createElement('span');
         amount.className = t.type === 'income' ? 'amount-income' : 'amount-expense';
@@ -92,8 +116,8 @@ function renderSpendingTrend(transactions) {
             datasets: [{
                 label: 'Daily spending',
                 data,
-                borderColor: '#4f7c3b',
-                backgroundColor: 'rgba(79, 124, 59, 0.15)',
+                borderColor: '#1a1a1a',
+                backgroundColor: 'rgba(26, 26, 26, 0.08)',
                 tension: 0.35,
                 fill: true,
                 pointRadius: 2,
@@ -104,10 +128,10 @@ function renderSpendingTrend(transactions) {
             plugins: { legend: { display: false } },
             scales: {
                 x: {
-                    ticks: { color: '#9c968e', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
-                    grid: { color: '#55483f' },
+                    ticks: { color: '#6b7280', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 },
+                    grid: { color: '#e2e5ea' },
                 },
-                y: { ticks: { color: '#9c968e' }, grid: { color: '#55483f' } },
+                y: { ticks: { color: '#6b7280' }, grid: { color: '#e2e5ea' } },
             },
         },
     });
@@ -141,6 +165,7 @@ function renderCategoryBreakdown(transactions, categoryNameById) {
         id => categoryNameById[id] || `Category ${id}`
     );
     const data = Object.values(byCategoryId);
+    const colors = labels.map(getCategoryColor);
 
     new Chart(document.getElementById('category-breakdown-chart'), {
         type: 'doughnut',
@@ -148,14 +173,14 @@ function renderCategoryBreakdown(transactions, categoryNameById) {
             labels,
             datasets: [{
                 data,
-                backgroundColor: ['#5972b1', '#d0a650', '#962324', '#4f7c3b', '#c26f40', '#9c968e'],
-                borderColor: '#201b17',
+                backgroundColor: colors,
+                borderColor: '#ffffff',
             }],
         },
         options: {
             responsive: true,
             plugins: {
-                legend: { position: 'right', labels: { color: '#d2c8c9' } },
+                legend: { position: 'right', labels: { color: '#1a1a1a' } },
             },
         },
     });
