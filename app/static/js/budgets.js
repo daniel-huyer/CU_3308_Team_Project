@@ -171,6 +171,19 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
+    const CATEGORY_COLORS = {
+        Food: "#3b82f6",
+        Transportation: "#f5b942",
+        Utilities: "#ef4444",
+        Entertainment: "#22c55e",
+        Healthcare: "#fb923c",
+        Housing: "#a855f7",
+        Gift: "#06b6d4",
+        Paycheck: "#10b981"
+    };
+    function getCategoryColor(categoryName) {
+        return CATEGORY_COLORS[categoryName] || "#6b7280";
+    }
     function createCell(text) {
         const cell = document.createElement(
             "td"
@@ -350,13 +363,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     )
                 );
 
-                row.appendChild(
-                    createCell(
-                        getCategoryName(
-                            budget
-                        )
-                    )
-                );
+                const categoryCell = document.createElement("td");
+                const categoryName = getCategoryName(budget);
+                const categoryBadge = document.createElement("span");
+                categoryBadge.textContent = categoryName;
+                categoryBadge.style.color = getCategoryColor(categoryName);
+                categoryBadge.style.fontWeight = "600";
+                categoryCell.appendChild(categoryBadge);
+                row.appendChild(categoryCell);
 
                 row.appendChild(
                     createCell(
