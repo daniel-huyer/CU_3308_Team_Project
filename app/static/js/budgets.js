@@ -412,7 +412,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Edit";
 
                 editButton.className =
-                    "edit-budget-button";
+                    "btn btn-secondary edit-budget-button";
 
                 editButton.dataset.id =
                     budget.id;

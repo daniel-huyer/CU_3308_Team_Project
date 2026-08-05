@@ -411,7 +411,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Edit";
 
                 editButton.className =
-                    "edit-transaction-button";
+                    "btn btn-secondary edit-transaction-button";
 
                 editButton.dataset.id =
                     transaction.id;
@@ -428,7 +428,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     "Delete";
 
                 deleteButton.className =
-                    "delete-transaction-button";
+                    "btn btn-danger delete-transaction-button";
 
                 deleteButton.dataset.id =
                     transaction.id;

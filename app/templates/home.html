@@ -6,11 +6,14 @@
 <!-- header/nav get's included from base.html -->
 <!-- start main -->
 {% block content %}
-    <!-- add main html content here -->
-    <!--<div>
-            ....etc
+    <div class="home">
+        <h1>JGT Personal Finance Dashboard</h1>
+        <p>Track your income, expenses, and budgets - all in one place</p>
+        <div class="home-links">
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-secondary">Register</a>
         </div>
-    -->
+    </div>
 {% endblock %}
 <!-- end main -->
 <!-- footer get's included from base.html -->
