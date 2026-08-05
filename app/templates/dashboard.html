@@ -14,30 +14,30 @@
 
     <div class="card-grid">
         <div class="card">
-            <div class="form-group"><label>Current Balance</label></div>
+            <div class="card-label"><label>Current Balance</label></div>
             <h2 id="balance">$0.00</h2>
         </div>
         <div class="card">
-            <div class="form-group"><label>Income</label></div>
+            <div class="card-label"><label>Income</label></div>
             <h2 id="income" class="amount-income">$0.00</h2>
         </div>
         <div class="card">
-            <div class="form-group"><label>Expenses</label></div>
+            <div class="card-label"><label>Expenses</label></div>
             <h2 id="expenses" class="amount-expense">$0.00</h2>
         </div>
     </div>
     <div class="card-grid">
         <div class="card">
-            <div class="form-group"><label>Spending Trend (30 Days)</label></div>
+            <div class="card-label"><label>Spending Trend (30 Days)</label></div>
             <canvas id="spending-trend-chart" height="200"></canvas>
         </div>
         <div class="card">
-            <div class="form-group"><label>Spending by Category (This Month)</label></div>
+            <div class="card-label"><label>Spending by Category (This Month)</label></div>
             <canvas id="category-breakdown-chart" height="200"></canvas>
         </div>
     </div>
     <div class="card">
-        <div class="form-group"><label>Recent Transactions</label></div>
+        <div class="card-label"><label>Recent Transactions</label></div>
         <div id="recent-transactions"></div>
     </div>
     <a href="{{ url_for('main.transactions') }}" class="btn btn-primary">+ Add Transaction</a>
