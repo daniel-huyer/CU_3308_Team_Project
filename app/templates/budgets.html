@@ -11,38 +11,126 @@
 
     <h1>Budgets</h1>
     <h3>Hi {{ current_user.username }},</h3>
+    <p>Welcome to your Budgets</p>
 
-    <div class="card">
-        <div class="form-group"><label>Set a Budget</label></div>
-        <form id="budget-form">
-            <div class="form-group">
-                <label for="budget-month">Month</label>
-                <input type="month" id="budget-month" name="month" required>
-            </div>
-            <div class="form-group">
-                <label for="budget-category">Category</label>
-                <select id="budget-category" name="category_id" required>
-                    <option value="">Select Category</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="budget-limit">Limit Amount</label>
-                <input type="number" id="budget-limit" name="limit_amount" step="0.01" min="0.01" placeholder="0.00" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Save Budget</button>
-        </form>
-        <p id="budget-form-message"></p>
+    <hr />
+
+    <h2 id="budget-form-title">Add Budget</h2>
+
+    <form id="budget-form">
+        <!-- Stores the budget ID while editing -->
+        <div class="form-group">
+            <input
+                type="hidden"
+                id="budget_id"
+                name="budget_id"
+            />
+            <label for="category_id">Category</label>
+            <select
+                id="category_id"
+                name="category_id"
+                required
+            >
+                <option value="">Select Category</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="month">Month</label>    
+            <input
+                type="month"
+                id="month"
+                name="month"
+                required
+            />
+        </div>
+        <div class="form-group">
+            <label for="limit_amount">Budget Limit</label>    
+            <input
+                type="number"
+                id="limit_amount"
+                name="limit_amount"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                required
+            />
+        </div>
+
+        <div class="form-group">
+            <button
+                type="submit"
+                id="budget-submit"
+                class="btn"
+            >
+                Add Budget
+            </button>
+        </div>
+
+        <div class="form-group">
+            <button
+                type="button"
+                id="cancel-budget-edit"
+                hidden
+            >
+                Cancel Edit
+            </button>
+        </div>
+    </form>
+
+    <p id="budget-message" role="status"></p>
+
+    <hr />
+
+    <h2>Budget List</h2>
+
+    <div class="form-group" style="max-width: 200px;">
+        <label for="budget-filter-month">Filter by Month</label>
+        <input type="month" id="budget-filter-month" name="budget_filter_month" />
     </div>
 
-    <div class="card">
-        <div class="form-group"><label>Budgets for <span id="budget-list-month"></span></label></div>
-        <div id="budget-list"></div>
+    <p id="budget-list-message" role="status"></p>
+
+    <div id="budget-cards"></div>
+
+    <div style="overflow-x: auto;">
+        <p id="no-budgets-message" hidden>
+            No budgets found.
+        </p>
+
+        <table id="budget-table">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Category</th>
+                    <th>Limit</th>
+                    <th>Spent</th>
+                    <th>Remaining</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody id="budget-table-body">
+                <tr>
+                    <td colspan="6">
+                        Loading budgets...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 
-</div>
-{% endblock %}
+  {% endblock %}
 <!-- end main -->
-<!-- footer get's included from base.html -->
+
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/budgets.js') }}"></script>
+    <script>
+        const API_BASE = "{{ url_for('main.get_categories') | replace('/api/categories', '') }}";
+    </script>
+
+    <script
+        src="{{ url_for('static', filename='js/budgets.js') }}"
+        defer
+    ></script>
 {% endblock %}
+<!-- footer get's included from base.html -->

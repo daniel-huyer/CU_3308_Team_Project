@@ -1,175 +1,676 @@
-// app/static/js/budgets.js
+document.addEventListener("DOMContentLoaded", function () {
 
-async function fetchJSON(url, options) {
-    const res = await fetch(url, options);
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) {
-        const err = new Error(body.message || `Request to ${url} failed: ${res.status}`);
-        err.status = res.status;
-        err.body = body;
-        throw err;
-    }
-    return body;
-}
-
-function formatCurrency(n) {
-    return `$${Number(n).toFixed(2)}`;
-}
-
-function currentMonth() {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-let categoriesById = {};
-let expenseCategories = [];
-let page;
-
-async function init() {
-    page = document.getElementById('budgets-page');
-
-    const monthInput = document.getElementById('budget-month');
-    monthInput.value = currentMonth();
-    document.getElementById('budget-list-month').textContent = currentMonth();
-
-    const catRes = await fetchJSON(page.dataset.categoriesUrl);
-    categoriesById = {};
-    catRes.data.forEach(c => { categoriesById[c.id] = c; });
-    expenseCategories = catRes.data.filter(c => c.type === 'expense');
-
-    populateCategoryDropdown();
-    await refreshBudgetList();
-
-    document.getElementById('budget-form').addEventListener('submit', handleSubmit);
-    monthInput.addEventListener('change', () => {
-        document.getElementById('budget-list-month').textContent = monthInput.value;
-        refreshBudgetList();
-    });
-}
-
-function populateCategoryDropdown() {
-    const select = document.getElementById('budget-category');
-    select.innerHTML = '<option value="">Select Category</option>';
-    expenseCategories.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c.id;
-        opt.textContent = c.name;
-        select.appendChild(opt);
-    });
-}
-
-async function handleSubmit(e) {
-    e.preventDefault();
-    const messageEl = document.getElementById('budget-form-message');
-    messageEl.textContent = '';
-    messageEl.className = '';
-
-    const month = document.getElementById('budget-month').value;
-    const categoryId = document.getElementById('budget-category').value;
-    const limitAmount = document.getElementById('budget-limit').value;
-
-    try {
-        await fetchJSON(page.dataset.budgetsUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                month,
-                category_id: Number(categoryId),
-                limit_amount: Number(limitAmount),
-            }),
+    async function fetchJSON(url, options = {}) {
+        const res = await fetch(url, {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+            ...options
         });
-        messageEl.textContent = 'Budget saved.';
-        messageEl.className = 'inline-success';
-        document.getElementById('budget-form').reset();
-        document.getElementById('budget-month').value = month;
-        await refreshBudgetList();
-    } catch (err) {
-        if (err.status === 409) {
-            messageEl.textContent = 'A budget already exists for this category and month. Edit it in the list below instead.';
-        } else {
-            messageEl.textContent = err.message || 'Failed to save budget.';
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const err = new Error(body.message || `Request failed: ${res.status}`);
+            err.status = res.status;
+            err.body = body;
+            throw err;
         }
-        messageEl.className = 'inline-error';
+        return body;
     }
-}
 
-async function refreshBudgetList() {
-    const month = document.getElementById('budget-month').value;
-    const [budgetsRes, txRes] = await Promise.all([
-        fetchJSON(page.dataset.budgetsUrl),
-        fetchJSON(page.dataset.transactionsUrl),
-    ]);
+    const form = document.getElementById(
+        "budget-form"
+    );
 
-    const budgetsForMonth = budgetsRes.data.filter(b => b.month === month);
-    const spentByCategory = {};
-    txRes.data
-        .filter(t => t.type === 'expense' && t.date.startsWith(month))
-        .forEach(t => {
-            spentByCategory[t.category_id] = (spentByCategory[t.category_id] || 0) + t.amount;
-        });
+    const budgetIdInput = document.getElementById(
+        "budget_id"
+    );
 
-    renderBudgetList(budgetsForMonth, spentByCategory);
-}
+    const categoryInput = document.getElementById(
+        "category_id"
+    );
 
-function renderBudgetList(budgets, spentByCategory) {
-    const container = document.getElementById('budget-list');
-    container.innerHTML = '';
+    const monthInput = document.getElementById(
+        "month"
+    );
 
-    if (budgets.length === 0) {
-        container.innerHTML = '<p class="muted">No budgets set for this month yet.</p>';
+    const limitInput = document.getElementById(
+        "limit_amount"
+    );
+
+    const submitButton = document.getElementById(
+        "budget-submit"
+    );
+
+    const cancelEditButton = document.getElementById(
+        "cancel-budget-edit"
+    );
+
+    const tableBody = document.getElementById(
+        "budget-table-body"
+    );
+
+    const noBudgetsMessage = document.getElementById(
+        "no-budgets-message"
+    );
+
+    const message = document.getElementById(
+        "budget-message"
+    );
+
+    const listMessage = document.getElementById(
+        "budget-list-message"
+    );
+
+    const formTitle = document.getElementById(
+        "budget-form-title"
+    );
+
+    const budgetCards = document.getElementById(
+        "budget-cards"
+    );
+
+    const filterMonthInput = document.getElementById(
+        "budget-filter-month"
+    );
+
+    if (!form || !tableBody) {
         return;
     }
 
-    budgets.forEach(b => {
-        const spent = spentByCategory[b.category_id] || 0;
-        const pct = Math.min(100, (spent / b.limit_amount) * 100);
-        const over = spent > b.limit_amount;
-        const category = categoriesById[b.category_id];
-        const categoryName = category ? category.name : `Category ${b.category_id}`;
 
-        const row = document.createElement('div');
-        row.className = 'card';
-        row.style.marginBottom = '0.75rem';
+    function showMessage(text, isError = false) {
+        if (!message) {
+            return;
+        }
 
-        row.innerHTML = `
-            <div style="display:flex; justify-content:space-between;">
-                <strong>${categoryName}</strong>
-                <span class="${over ? 'amount-expense' : ''}">${formatCurrency(spent)} / ${formatCurrency(b.limit_amount)}</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-bar-fill ${over ? 'over-budget' : ''}" style="width:${pct}%"></div>
-            </div>
-            ${over ? '<p class="inline-error">Over budget</p>' : ''}
-            <div class="row-actions" style="margin-top:0.5rem;">
-                <input type="number" step="0.01" min="0.01" class="edit-limit-input" data-budget-id="${b.id}" value="${b.limit_amount}" style="width:100px;">
-                <button type="button" class="btn save-limit-btn" data-budget-id="${b.id}">Update Limit</button>
-            </div>
+        message.textContent = text;
+
+        message.classList.toggle(
+            "error-message",
+            isError
+        );
+
+        message.classList.toggle(
+            "success-message",
+            !isError && text !== ""
+        );
+    }
+
+
+    function clearMessage() {
+        showMessage("");
+    }
+
+
+    function formatAmount(amount) {
+        const numericAmount = Number(amount);
+
+        if (!Number.isFinite(numericAmount)) {
+            return "$0.00";
+        }
+
+        return numericAmount.toLocaleString(
+            "en-US",
+            {
+                style: "currency",
+                currency: "USD"
+            }
+        );
+    }
+
+
+    function currentMonth() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+
+    function renderBudgetCards(budgets) {
+        if (!budgetCards) return;
+        budgetCards.innerHTML = "";
+
+        const month = filterMonthInput?.value || currentMonth();
+        const filtered = budgets.filter(b => b.month === month);
+
+        if (filtered.length === 0) {
+            budgetCards.innerHTML = `<p style="color: var(--color-muted); margin-bottom: 1rem;">No budgets set for ${month}.</p>`;
+            return;
+        }
+
+        filtered.forEach(function (b) {
+            const spent = Number(b.spent_amount || 0);
+            const limit = Number(b.limit_amount || 0);
+            const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+            const over = spent > limit;
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.style.marginBottom = "0.75rem";
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <strong>${getCategoryName(b)}</strong>
+                    <span class="${over ? "amount-expense" : ""}">${formatAmount(spent)} / ${formatAmount(limit)}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill${over ? " over-budget" : ""}" style="width:${pct}%"></div>
+                </div>
+                ${over ? '<p class="error-message" style="margin-top:0.25rem; font-size:0.85rem;">Over budget</p>' : ""}
+            `;
+            budgetCards.appendChild(card);
+        });
+    }
+
+
+    function getCategoryName(budget) {
+        return (
+            budget.category_name ||
+            budget.category?.name ||
+            budget.category ||
+            budget.category_id ||
+            "Uncategorized"
+        );
+    }
+
+
+    function createCell(text) {
+        const cell = document.createElement(
+            "td"
+        );
+
+        cell.textContent = text ?? "";
+
+        return cell;
+    }
+
+
+    function setDefaultMonth() {
+        if (monthInput.value) {
+            return;
+        }
+
+        const currentDate = new Date();
+
+        const year =
+            currentDate.getFullYear();
+
+        const month = String(
+            currentDate.getMonth() + 1
+        ).padStart(2, "0");
+
+        monthInput.value =
+            `${year}-${month}`;
+    }
+
+
+    function buildBudgetPayload() {
+        return {
+            category_id: Number(
+                categoryInput.value
+            ),
+
+            month: monthInput.value,
+
+            limit_amount: Number(
+                limitInput.value
+            )
+        };
+    }
+
+
+    function resetBudgetForm() {
+        form.reset();
+
+        budgetIdInput.value = "";
+
+        categoryInput.disabled = false;
+        monthInput.disabled = false;
+
+        setDefaultMonth();
+
+        if (formTitle) {
+            formTitle.textContent =
+                "Add Budget";
+        }
+
+        submitButton.textContent =
+            "Add Budget";
+
+        cancelEditButton.hidden = true;
+    }
+
+
+    function beginEditBudget(budget) {
+        budgetIdInput.value =
+            budget.id ?? "";
+
+        categoryInput.value =
+            String(
+                budget.category_id ?? ""
+            );
+
+        monthInput.value =
+            budget.month ?? "";
+
+        limitInput.value =
+            budget.limit_amount ?? "";
+
+        categoryInput.disabled = true;
+        monthInput.disabled = true;
+
+        if (formTitle) {
+            formTitle.textContent =
+                "Edit Budget";
+        }
+
+        submitButton.textContent =
+            "Update Budget";
+
+        cancelEditButton.hidden = false;
+
+        showMessage(
+            `Editing budget ${budget.id}.`
+        );
+
+        form.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+
+
+    function extractBudgets(result) {
+        if (Array.isArray(result.data)) {
+            return result.data;
+        }
+
+        if (
+            Array.isArray(
+                result.data?.budgets
+            )
+        ) {
+            return result.data.budgets;
+        }
+
+        if (
+            Array.isArray(
+                result.budgets
+            )
+        ) {
+            return result.budgets;
+        }
+
+        return [];
+    }
+
+
+    function renderBudgets(budgets) {
+        tableBody.innerHTML = "";
+
+        renderBudgetCards(budgets);
+
+        if (
+            !Array.isArray(budgets) ||
+            budgets.length === 0
+        ) {
+            if (noBudgetsMessage) {
+                noBudgetsMessage.hidden =
+                    false;
+
+                noBudgetsMessage.textContent =
+                    "No budgets found.";
+            }
+
+            return;
+        }
+
+        if (noBudgetsMessage) {
+            noBudgetsMessage.hidden = true;
+        }
+
+        budgets.forEach(
+            function (budget) {
+                const row =
+                    document.createElement(
+                        "tr"
+                    );
+
+                const remainingAmount =
+                    budget.remaining_amount ??
+                    (
+                        Number(
+                            budget.limit_amount
+                        ) -
+                        Number(
+                            budget.spent_amount ?? 0
+                        )
+                    );
+
+                row.appendChild(
+                    createCell(
+                        budget.month
+                    )
+                );
+
+                row.appendChild(
+                    createCell(
+                        getCategoryName(
+                            budget
+                        )
+                    )
+                );
+
+                row.appendChild(
+                    createCell(
+                        formatAmount(
+                            budget.limit_amount
+                        )
+                    )
+                );
+
+                row.appendChild(
+                    createCell(
+                        formatAmount(
+                            budget.spent_amount ?? 0
+                        )
+                    )
+                );
+
+                const remainingCell =
+                    createCell(
+                        formatAmount(
+                            remainingAmount
+                        )
+                    );
+
+                if (
+                    Number(
+                        remainingAmount
+                    ) < 0
+                ) {
+                    remainingCell.classList.add(
+                        "error-message"
+                    );
+                }
+
+                row.appendChild(
+                    remainingCell
+                );
+
+                const actionsCell =
+                    document.createElement(
+                        "td"
+                    );
+
+                const editButton =
+                    document.createElement(
+                        "button"
+                    );
+
+                editButton.type =
+                    "button";
+
+                editButton.textContent =
+                    "Edit";
+
+                editButton.className =
+                    "edit-budget-button";
+
+                editButton.dataset.id =
+                    budget.id;
+
+                actionsCell.appendChild(
+                    editButton
+                );
+
+                row.appendChild(
+                    actionsCell
+                );
+
+                tableBody.appendChild(
+                    row
+                );
+
+                editButton.addEventListener(
+                    "click",
+                    function () {
+                        beginEditBudget(
+                            budget
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+
+    async function loadCategories() {
+        try {
+            const result = await fetchJSON(
+                `${API_BASE}/api/categories`
+            );
+
+            categoryInput.innerHTML =
+                '<option value="">Select Category</option>';
+
+            result.data.forEach(
+                function (category) {
+                    if (category.type !== "expense") {
+                        return;
+                    }
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        category.id;
+
+                    option.textContent =
+                        category.name;
+
+                    categoryInput.appendChild(
+                        option
+                    );
+                }
+            );
+
+        } catch (error) {
+            console.error(
+                "Unable to load categories:",
+                error
+            );
+
+            categoryInput.innerHTML =
+                '<option value="">Unable to load categories</option>';
+
+            categoryInput.disabled = true;
+
+            showMessage(
+                error.message ||
+                "Unable to load categories.",
+                true
+            );
+        }
+    }
+
+
+    async function loadBudgets() {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6">
+                    Loading budgets...
+                </td>
+            </tr>
         `;
 
-        container.appendChild(row);
-    });
+        if (listMessage) {
+            listMessage.textContent = "";
+        }
 
-    container.querySelectorAll('.save-limit-btn').forEach(btn => {
-        btn.addEventListener('click', () => handleUpdateLimit(btn.dataset.budgetId));
-    });
-}
+        try {
+            const result = await fetchJSON(
+                `${API_BASE}/api/budgets`
+            );
 
-async function handleUpdateLimit(budgetId) {
-    const input = document.querySelector(`.edit-limit-input[data-budget-id="${budgetId}"]`);
-    const newLimit = Number(input.value);
+            const budgets =
+                extractBudgets(result);
 
-    try {
-        await fetchJSON(`${page.dataset.budgetsUrl}/${budgetId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ limit_amount: newLimit }),
-        });
-        await refreshBudgetList();
-    } catch (err) {
-        alert(err.message || 'Failed to update budget.');
+            renderBudgets(
+                budgets
+            );
+
+        } catch (error) {
+            tableBody.innerHTML = "";
+
+            if (noBudgetsMessage) {
+                noBudgetsMessage.hidden =
+                    false;
+
+                noBudgetsMessage.textContent =
+                    "Unable to load budgets.";
+            }
+
+            if (listMessage) {
+                listMessage.textContent =
+                    error.message ||
+                    "Unable to load budgets.";
+            }
+
+            showMessage(
+                error.message ||
+                "Unable to load budgets.",
+                true
+            );
+        }
     }
-}
 
-document.addEventListener('DOMContentLoaded', () => {
-    init().catch(err => console.error('Failed to load budgets page:', err));
+
+    async function submitBudget(event) {
+        event.preventDefault();
+
+        clearMessage();
+
+        const budgetId =
+            budgetIdInput.value.trim();
+
+        const isEditing =
+            budgetId !== "";
+
+        if (!categoryInput.value) {
+            showMessage(
+                "Please select a category.",
+                true
+            );
+
+            return;
+        }
+
+        if (!monthInput.value) {
+            showMessage(
+                "Please select a month.",
+                true
+            );
+
+            return;
+        }
+
+        if (limitInput.value === "") {
+            showMessage(
+                "Please enter a budget limit.",
+                true
+            );
+
+            return;
+        }
+
+        const endpoint = isEditing
+            ? `${API_BASE}/api/budgets/${budgetId}`
+            : `${API_BASE}/api/budgets`;
+
+        const method = isEditing
+            ? "PUT"
+            : "POST";
+
+        const payload =
+            buildBudgetPayload();
+
+        try {
+            submitButton.disabled = true;
+
+            showMessage(
+                isEditing
+                    ? "Updating budget..."
+                    : "Adding budget..."
+            );
+
+            const result = await fetchJSON(
+                endpoint,
+                {
+                    method: method,
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify(
+                        payload
+                    )
+                }
+            );
+
+            showMessage(
+                result.message ||
+                (
+                    isEditing
+                        ? "Budget updated successfully."
+                        : "Budget added successfully."
+                )
+            );
+
+            resetBudgetForm();
+
+            await loadBudgets();
+
+        } catch (error) {
+            showMessage(
+                error.message ||
+                "Unable to save the budget.",
+                true
+            );
+
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+
+    form.addEventListener(
+        "submit",
+        submitBudget
+    );
+
+
+    cancelEditButton?.addEventListener(
+        "click",
+        function () {
+            resetBudgetForm();
+            clearMessage();
+        }
+    );
+
+    filterMonthInput?.addEventListener(
+        "change",
+        function () {
+            loadBudgets();
+        }
+    );
+
+
+    setDefaultMonth();
+    if (filterMonthInput) {
+        filterMonthInput.value = currentMonth();
+    }
+    loadCategories();
+    loadBudgets();
 });
