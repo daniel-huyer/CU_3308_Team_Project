@@ -1,11 +1,14 @@
 {% extends 'base.html' %}
-
 {% block title %}Budgets - JGT Finance{% endblock %}
-
 {% block styles %}<!-- page specific style sheet if wanted -->{% endblock %}
 <!-- header/nav get's included from base.html -->
 <!-- start main -->
 {% block content %}
+<div id="budgets-page"
+     data-budgets-url="{{ url_for('main.get_budgets') }}"
+     data-categories-url="{{ url_for('main.get_categories') }}"
+     data-transactions-url="{{ url_for('main.get_transactions') }}">
+
     <h1>Budgets</h1>
     <h3>Hi {{ current_user.username }},</h3>
     <p>Welcome to your Budgets</p>
@@ -81,7 +84,14 @@
 
     <h2>Budget List</h2>
 
+    <div class="form-group" style="max-width: 200px;">
+        <label for="budget-filter-month">Filter by Month</label>
+        <input type="month" id="budget-filter-month" name="budget_filter_month" />
+    </div>
+
     <p id="budget-list-message" role="status"></p>
+
+    <div id="budget-cards"></div>
 
     <div style="overflow-x: auto;">
         <p id="no-budgets-message" hidden>

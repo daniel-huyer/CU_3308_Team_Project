@@ -1,4 +1,21 @@
 document.addEventListener("DOMContentLoaded", function () {
+
+    async function fetchJSON(url, options = {}) {
+        const res = await fetch(url, {
+            credentials: "include",
+            headers: { Accept: "application/json" },
+            ...options
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            const err = new Error(body.message || `Request failed: ${res.status}`);
+            err.status = res.status;
+            err.body = body;
+            throw err;
+        }
+        return body;
+    }
+
     const form = document.getElementById(
         "budget-form"
     );
@@ -47,6 +64,14 @@ document.addEventListener("DOMContentLoaded", function () {
         "budget-form-title"
     );
 
+    const budgetCards = document.getElementById(
+        "budget-cards"
+    );
+
+    const filterMonthInput = document.getElementById(
+        "budget-filter-month"
+    );
+
     if (!form || !tableBody) {
         return;
     }
@@ -90,6 +115,48 @@ document.addEventListener("DOMContentLoaded", function () {
                 currency: "USD"
             }
         );
+    }
+
+
+    function currentMonth() {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
+
+
+    function renderBudgetCards(budgets) {
+        if (!budgetCards) return;
+        budgetCards.innerHTML = "";
+
+        const month = filterMonthInput?.value || currentMonth();
+        const filtered = budgets.filter(b => b.month === month);
+
+        if (filtered.length === 0) {
+            budgetCards.innerHTML = `<p style="color: var(--color-muted); margin-bottom: 1rem;">No budgets set for ${month}.</p>`;
+            return;
+        }
+
+        filtered.forEach(function (b) {
+            const spent = Number(b.spent_amount || 0);
+            const limit = Number(b.limit_amount || 0);
+            const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+            const over = spent > limit;
+
+            const card = document.createElement("div");
+            card.className = "card";
+            card.style.marginBottom = "0.75rem";
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <strong>${getCategoryName(b)}</strong>
+                    <span class="${over ? "amount-expense" : ""}">${formatAmount(spent)} / ${formatAmount(limit)}</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-bar-fill${over ? " over-budget" : ""}" style="width:${pct}%"></div>
+                </div>
+                ${over ? '<p class="error-message" style="margin-top:0.25rem; font-size:0.85rem;">Over budget</p>' : ""}
+            `;
+            budgetCards.appendChild(card);
+        });
     }
 
 
@@ -238,6 +305,8 @@ document.addEventListener("DOMContentLoaded", function () {
     function renderBudgets(budgets) {
         tableBody.innerHTML = "";
 
+        renderBudgetCards(budgets);
+
         if (
             !Array.isArray(budgets) ||
             budgets.length === 0
@@ -375,38 +444,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
     async function loadCategories() {
         try {
-            const response = await fetch(
-                `${API_BASE}/api/categories`,
-                {
-                    method: "GET",
-
-                    headers: {
-                        Accept:
-                            "application/json"
-                    },
-
-                    credentials: "include"
-                }
+            const result = await fetchJSON(
+                `${API_BASE}/api/categories`
             );
-
-            const result =
-                await response.json();
-
-            if (
-                !response.ok ||
-                result.status !== "success"
-            ) {
-                throw new Error(
-                    result.message ||
-                    "Unable to load categories."
-                );
-            }
 
             categoryInput.innerHTML =
                 '<option value="">Select Category</option>';
 
             result.data.forEach(
                 function (category) {
+                    if (category.type !== "expense") {
+                        return;
+                    }
+
                     const option =
                         document.createElement(
                             "option"
@@ -416,7 +466,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         category.id;
 
                     option.textContent =
-                        `${category.name} (${category.type})`;
+                        category.name;
 
                     categoryInput.appendChild(
                         option
@@ -458,32 +508,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         try {
-            const response = await fetch(
-                `${API_BASE}/api/budgets`,
-                {
-                    method: "GET",
-
-                    headers: {
-                        Accept:
-                            "application/json"
-                    },
-
-                    credentials: "include"
-                }
+            const result = await fetchJSON(
+                `${API_BASE}/api/budgets`
             );
-
-            const result =
-                await response.json();
-
-            if (
-                !response.ok ||
-                result.status !== "success"
-            ) {
-                throw new Error(
-                    result.message ||
-                    "Unable to load budgets."
-                );
-            }
 
             const budgets =
                 extractBudgets(result);
@@ -576,43 +603,21 @@ document.addEventListener("DOMContentLoaded", function () {
                     : "Adding budget..."
             );
 
-            const response = await fetch(
+            const result = await fetchJSON(
                 endpoint,
                 {
                     method: method,
 
                     headers: {
                         "Content-Type":
-                            "application/json",
-
-                        Accept:
                             "application/json"
                     },
-
-                    credentials: "include",
 
                     body: JSON.stringify(
                         payload
                     )
                 }
             );
-
-            const result =
-                await response.json();
-
-            if (
-                !response.ok ||
-                result.status !== "success"
-            ) {
-                throw new Error(
-                    result.message ||
-                    (
-                        isEditing
-                            ? "Unable to update budget."
-                            : "Unable to add budget."
-                    )
-                );
-            }
 
             showMessage(
                 result.message ||
@@ -654,8 +659,18 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     );
 
+    filterMonthInput?.addEventListener(
+        "change",
+        function () {
+            loadBudgets();
+        }
+    );
+
 
     setDefaultMonth();
+    if (filterMonthInput) {
+        filterMonthInput.value = currentMonth();
+    }
     loadCategories();
     loadBudgets();
 });
